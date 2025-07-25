@@ -90,8 +90,12 @@ const ResourceTracker = (() => {
                 { name: '【历练·十二】', required: 47, editable: true }
             ],
         }
-    };
-
+ trainingPresets: {
+        13: { 4: 6, 6: 12, 8: 24, 10: 16, 12: 1 },
+        15: { 4: 6, 6: 12, 8: 24, 10: 35, 12: 12 },
+        17: { 4: 6, 6: 12, 8: 24, 10: 35, 12: 47 }
+    }
+};
     // ==================== 状态管理 ====================
     let state = {
         // 基础状态
@@ -343,6 +347,8 @@ const ResourceTracker = (() => {
 
     // 渲染单个历练类别
     const renderTrainingCategory = (category, container) => {
+       const currentTier = state.training[category][0]?.tier || 17;
+       const floors = [4, 6, 8, 10, 12]; // 对应五个历练层级
         // 保存当前编辑状态
         const activeInput = document.activeElement;
         const isEditing = activeInput?.classList?.contains('training-count-input') && 
