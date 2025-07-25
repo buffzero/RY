@@ -101,10 +101,25 @@ const ResourceTracker = (() => {
         // 材料收集状态
         materials: {},
         // 历练进度
-        training: {
-            yinYang: Array(5).fill().map(() => ({ completed: 0, required: 6, userModified: false })),
-            windFire: Array(5).fill().map(() => ({ completed: 0, required: 6, userModified: false })),
-            earthWater: Array(5).fill().map(() => ({ completed: 0, required: 6, userModified: false }))
+       training: {
+            yinYang: GAME_DATA.training.yinYang.map(item => ({
+                completed: 0,
+                required: item.required,
+                userModified: false,
+                tier: 17 // 默认17修为
+            })),
+            windFire: GAME_DATA.training.windFire.map(item => ({
+                completed: 0,
+                required: item.required,
+                userModified: false,
+                tier: 17 // 默认17修为
+            })),
+            earthWater: GAME_DATA.training.earthWater.map(item => ({
+                completed: 0,
+                required: item.required,
+                userModified: false,
+                tier: 17 // 默认17修为
+            }))
         },
         targetSelection: {
             classes: {
