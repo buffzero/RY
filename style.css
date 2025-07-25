@@ -892,7 +892,6 @@ button:disabled:hover {
     font-size: 14px;
 }
 
-
 /* === helper styles === */
 .btn-reset{
   background:#ff6b6b;
@@ -918,4 +917,13 @@ button:disabled:hover {
 }
 .reset-category-btn:hover {
     background: #ff5252;
+}
+/* 修为选择器 */
+.tier-select {
+    margin-left: 10px;
+    padding: 3px 5px;
+    border-radius: 4px;
+    border: 1px solid var(--gray-200);
+    font-size: 12px;
+    background: white;
 }
