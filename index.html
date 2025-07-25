@@ -176,33 +176,57 @@
 
 <script src="script.js"></script>
 <script>
+  // 增强版初始化检测
   function initApp() {
-    if (window.ResourceTracker) {
-      console.log("✅ ResourceTracker 加载成功，开始初始化");
-      ResourceTracker.init();
-    } else {
-      console.error("❌ 致命错误：请检查：\n1. script.js 是否成功加载\n2. 文件名是否为小写 script.js\n3. 控制台是否有404错误");
+    // 确保核心元素存在
+    const requiredElements = [
+      '#resourceTracker',
+      '#money-check',
+      '#bingshu_canjuan',
+      '#bingshu_quanjuan'
+    ];
+    
+    const missingElements = requiredElements.filter(id => !document.querySelector(id));
+    
+    if (missingElements.length > 0) {
+      console.error("缺失关键元素:", missingElements);
       document.body.innerHTML = `
-        <div style="padding:20px;font-family:sans-serif;color:red;max-width:600px;margin:0 auto;">
+        <div style="padding:20px;color:red;font-family:sans-serif">
           <h2>系统初始化失败</h2>
-          <p>请按 F12 打开开发者工具，查看控制台错误信息</p>
-          <p>常见原因：</p>
+          <p>缺失关键HTML元素，请检查：</p>
           <ul>
-            <li>script.js 文件未正确加载</li>
-            <li>浏览器缓存未更新</li>
-            <li>文件名大小写不匹配</li>
+            ${missingElements.map(el => `<li>${el}</li>`).join('')}
           </ul>
-          <button onclick="location.reload()" style="padding:8px 16px;background:#ff6b6b;color:white;border:none;border-radius:4px;">
-            点击强制刷新
+          <button onclick="location.reload()" style="padding:8px 16px;background:#ff6b6b;color:white;border:none">
+            刷新页面
           </button>
         </div>
       `;
+      return;
+    }
+
+    if (window.ResourceTracker) {
+      console.log("✅ 资源追踪系统准备就绪");
+      ResourceTracker.init();
+    } else {
+      console.error("❌ ResourceTracker未定义");
+      // 尝试重新加载脚本
+      const script = document.createElement('script');
+      script.src = 'script.js';
+      script.onload = () => {
+        if (window.ResourceTracker) {
+          ResourceTracker.init();
+        } else {
+          location.reload();
+        }
+      };
+      document.head.appendChild(script);
     }
   }
-  
-  // 双重触发保障
+
+  // 双重触发机制
   if (document.readyState === 'complete') {
-    initApp();
+    setTimeout(initApp, 100); // 微小延迟确保所有资源加载
   } else {
     document.addEventListener('DOMContentLoaded', initApp);
   }
