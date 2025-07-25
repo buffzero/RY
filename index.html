@@ -176,60 +176,13 @@
 
 <script src="script.js" defer onerror="alert('脚本加载失败！请检查路径或网络')"></script>
 <script>
-  // 增强版初始化检测
-  function initApp() {
-    // 确保核心元素存在
-    const requiredElements = [
-      '#resourceTracker',
-      '#money-check',
-      '#bingshu_canjuan',
-      '#bingshu_quanjuan'
-    ];
-    
-    const missingElements = requiredElements.filter(id => !document.querySelector(id));
-    
-    if (missingElements.length > 0) {
-      console.error("缺失关键元素:", missingElements);
-      document.body.innerHTML = `
-        <div style="padding:20px;color:red;font-family:sans-serif">
-          <h2>系统初始化失败</h2>
-          <p>缺失关键HTML元素，请检查：</p>
-          <ul>
-            ${missingElements.map(el => `<li>${el}</li>`).join('')}
-          </ul>
-          <button onclick="location.reload()" style="padding:8px 16px;background:#ff6b6b;color:white;border:none">
-            刷新页面
-          </button>
-        </div>
-      `;
-      return;
+  document.addEventListener('DOMContentLoaded', () => {
+    if (typeof ResourceTracker === 'undefined') {
+      console.error('ResourceTracker 未定义！');
+      return; // 阻止后续刷新
     }
-
-    if (window.ResourceTracker) {
-      console.log("✅ 资源追踪系统准备就绪");
-      ResourceTracker.init();
-    } else {
-      console.error("❌ ResourceTracker未定义");
-      // 尝试重新加载脚本
-      const script = document.createElement('script');
-      script.src = 'script.js';
-      script.onload = () => {
-        if (window.ResourceTracker) {
-          ResourceTracker.init();
-        } else {
-          location.reload();
-        }
-      };
-      document.head.appendChild(script);
-    }
-  }
-
-  // 双重触发机制
-  if (document.readyState === 'complete') {
-    setTimeout(initApp, 100); // 微小延迟确保所有资源加载
-  } else {
-    document.addEventListener('DOMContentLoaded', initApp);
-  }
+    ResourceTracker.init();
+  });
 </script>
    <!-- 放在这里 ↓↓↓ -->
 <div class="footer-controls">
