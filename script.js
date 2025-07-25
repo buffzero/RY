@@ -365,35 +365,45 @@ const ResourceTracker = (() => {
                         </div>
                     </div>
                     ${required > 0 ? renderCircles(required, completed) : ''}
-                    <div class="training-actions">
-                        <button class="consume-btn" 
-                            data-category="${category}" 
-                            data-index="${index}" 
-                            data-count="1"
-                            ${isMet ? 'disabled' : ''}>
-                            核销一次
-                        </button>
-                        <button class="consume-btn" 
-                            data-category="${category}" 
-                            data-index="${index}" 
-                            data-count="3"
-                            ${isMet || remaining < 3 ? 'disabled' : ''}>
-                            核销三次
-                        </button>
-                        <button class="consume-btn" 
-                            data-category="${category}" 
-                            data-index="${index}" 
-                            data-count="6"
-                            ${isMet || remaining < 6 ? 'disabled' : ''}>
-                            核销六次
-                        </button>
-                        <button class="undo-btn" 
-                            data-category="${category}" 
-                            data-index="${index}"
-                            ${completed <= 0 ? 'disabled' : ''}>
-                            撤销
-                        </button>
-                    </div>
+                  <div class="training-actions">
+    <button class="consume-btn" 
+        data-category="${category}" 
+        data-index="${index}" 
+        data-count="1"
+        ${isMet ? 'disabled' : ''}>
+        核销一次
+    </button>
+    <button class="consume-btn" 
+        data-category="${category}" 
+        data-index="${index}" 
+        data-count="3"
+        ${isMet || remaining < 3 ? 'disabled' : ''}>
+        核销三次
+    </button>
+    <button class="consume-btn" 
+        data-category="${category}" 
+        data-index="${index}" 
+        data-count="6"
+        ${isMet || remaining < 6 ? 'disabled' : ''}>
+        核销六次
+    </button>
+    <button class="consume-btn custom-consume" 
+        data-category="${category}" 
+        data-index="${index}">
+        核销指定次数
+    </button>
+    <input type="number" min="1" max="${remaining}" 
+        class="custom-consume-input" 
+        data-category="${category}" 
+        data-index="${index}"
+        placeholder="次数">
+    <button class="undo-btn" 
+        data-category="${category}" 
+        data-index="${index}"
+        ${completed <= 0 ? 'disabled' : ''}>
+        撤销
+    </button>
+</div>
                 </div>
             `;
         }).join('');
@@ -468,29 +478,40 @@ const ResourceTracker = (() => {
 
     // ==================== 操作处理 ====================
 
-    // 处理核销操作
-    const handleConsume = (category, index, count) => {
-        const trainingItem = state.training[category][index] || { completed: 0 };
-        const required = trainingItem.required || 0;
-        const completed = trainingItem.completed || 0;
-        const remaining = required - completed;
-        
-        const actualCount = Math.min(count, remaining);
-        if (actualCount <= 0) return;
-        
-        // 记录操作历史
-        state.trainingHistory.push({
-            category,
-            index,
-            previousCount: completed,
-            count: actualCount,
-            timestamp: new Date().toISOString()
-        });
-        
-        // 更新状态
-        state.training[category][index].completed = completed + actualCount;
-        updateAndSave();
-    };
+// 处理核销操作
+const handleConsume = (category, index, count) => {
+    const trainingItem = state.training[category][index] || { completed: 0 };
+    const required = trainingItem.required || 0;
+    const completed = trainingItem.completed || 0;
+    const remaining = required - completed; // 修复1: 正确计算剩余次数
+    
+    // 修复2: 添加输入验证
+    if (isNaN(count) || count <= 0) {
+        alert('核销次数必须大于0');
+        return;
+    }
+    
+    if (count > remaining) {
+        alert(`核销次数不能超过剩余次数（${remaining}）`);
+        return;
+    }
+    
+    const actualCount = Math.min(count, remaining);
+    if (actualCount <= 0) return;
+    
+    // 记录操作历史
+    state.trainingHistory.push({
+        category,
+        index,
+        previousCount: completed,
+        count: actualCount,
+        timestamp: new Date().toISOString()
+    });
+    
+    // 更新状态
+    state.training[category][index].completed = completed + actualCount;
+    updateAndSave();
+};
     
     // 处理撤销操作
     const handleUndo = (category, index) => {
@@ -516,6 +537,39 @@ const ResourceTracker = (() => {
 
     // 设置事件监听器
     const setupEventListeners = () => {
+        // 自定义核销按钮
+document.addEventListener('click', (e) => {
+    if (e.target.classList.contains('custom-consume')) {
+        const btn = e.target;
+        const category = btn.dataset.category;
+        const index = parseInt(btn.dataset.index);
+        
+        // 找到对应的输入框
+        const input = btn.nextElementSibling;
+        if (!input || !input.classList.contains('custom-consume-input')) {
+            console.error('找不到自定义核销输入框');
+            return;
+        }
+        
+        // 获取输入值
+        const count = parseInt(input.value);
+        if (isNaN(count) || count <= 0) {
+            alert('请输入有效的核销次数');
+            return;
+        }
+        
+        // 处理核销
+        handleConsume(category, index, count);
+        e.stopPropagation();
+    }
+});
+
+// 确保自定义输入框不触发其他事件
+document.addEventListener('click', (e) => {
+    if (e.target.classList.contains('custom-consume-input')) {
+        e.stopPropagation();
+    }
+});
         // 目标选择变化监听
         document.addEventListener('change', (e) => {
             if (e.target.matches('.target-section input[type="checkbox"]')) {
