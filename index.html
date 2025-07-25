@@ -174,15 +174,23 @@
     </div>
 </div>
 
-    <script>
-  // 确保DOM完全加载后再执行
-  document.addEventListener('DOMContentLoaded', function() {
-    if (typeof ResourceTracker !== 'undefined') {
+   <script src="script.js"></script>
+<script>
+  // 双重保险初始化
+  function initApp() {
+    if (window.ResourceTracker) {
       ResourceTracker.init();
     } else {
-      console.error('ResourceTracker未定义');
+      console.error("ResourceTracker 仍未定义，请检查：\n1. script.js 是否加载成功\n2. 控制台是否有404错误");
+      document.body.innerHTML = '<div style="padding:20px;color:red">系统初始化失败，请检查控制台错误</div>';
     }
-  });
+  }
+  
+  if (document.readyState === 'complete') {
+    initApp();
+  } else {
+    document.addEventListener('DOMContentLoaded', initApp);
+  }
 </script>
 </body>
 </html>
