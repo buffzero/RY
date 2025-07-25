@@ -348,17 +348,19 @@ const ResourceTracker = (() => {
     // 渲染单个历练类别
     const renderTrainingCategory = (category, container) => {
        const currentTier = state.training[category][0]?.tier || 17;
-       const floors = [4, 6, 8, 10, 12]; // 对应五个历练层级
-        // 保存当前编辑状态
-        const activeInput = document.activeElement;
-        const isEditing = activeInput?.classList?.contains('training-count-input') && 
-                        activeInput.dataset.category === category;
-        const editData = isEditing ? {
-            index: parseInt(activeInput.dataset.index),
-            value: activeInput.value,
-            cursorPos: activeInput.selectionStart
-        } : null;
-
+        container.innerHTML = `
+            <div class="training-category-title">
+                ${category === 'yinYang' ? '阴阳历练' : 
+                  category === 'windFire' ? '风火历练' : '地水历练'}
+                <select class="tier-select" data-category="${category}">
+                    <option value="13" ${currentTier === 13 ? 'selected' : ''}>修为13</option>
+                    <option value="15" ${currentTier === 15 ? 'selected' : ''}>修为15</option>
+                    <option value="17" ${currentTier === 17 ? 'selected' : ''}>修为17</option>
+                </select>
+                <button class="reset-category-btn" data-category="${category}">
+                    一键撤销
+                </button>
+            </div>
         // 主要渲染逻辑
         container.innerHTML = GAME_DATA.training[category].map((item, index) => {
             const trainingItem = state.training[category][index] || { completed: 0 };
@@ -428,6 +430,38 @@ const ResourceTracker = (() => {
                 </div>
             `;
         }).join('');
+        
+     /**
+     * 处理修为切换（全新功能）
+     */
+    const handleTierChange = (category, tier) => {
+        const floors = [4, 6, 8, 10, 12]; // 对应五个历练层级
+        
+        state.training[category].forEach((item, index) => {
+            if (!item.userModified) { // 只修改未手动调整过的
+                item.required = GAME_DATA.trainingPresets[tier][floors[index]];
+            }
+            item.tier = tier; // 更新修为等级
+        });
+        
+        updateAndSave(); // 触发界面更新
+    };
+
+    /**
+     * 一键撤销分类（全新功能）
+     */
+    const handleResetCategory = (category) => {
+        if (confirm(`确定要重置【${category}】的所有进度吗？`)) {
+            state.training[category].forEach(item => {
+                item.completed = 0;
+            });
+            // 清除相关历史记录
+            state.trainingHistory = state.trainingHistory.filter(
+                record => record.category !== category
+            );
+            updateAndSave();
+        }
+    };
 
         // 恢复编辑状态
         if (editData) {
@@ -583,6 +617,22 @@ document.addEventListener('click', (e) => {
         handleConsume(category, index, count);
         e.stopPropagation();
     }
+        // 新增修为切换监听
+        document.addEventListener('change', (e) => {
+            if (e.target.classList.contains('tier-select')) {
+                const category = e.target.dataset.category;
+                const tier = parseInt(e.target.value);
+                handleTierChange(category, tier);
+            }
+        });
+
+        // 新增一键撤销监听
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('reset-category-btn')) {
+                const category = e.target.dataset.category;
+                handleResetCategory(category);
+            }
+        });
 });
 
 // 确保自定义输入框不触发其他事件
@@ -853,7 +903,9 @@ document.querySelectorAll('.tier-select').forEach(sel=>{
 /* === helper end === */
 })();
 
-// 页面初始化
+// ==================== 初始化 ====================
+    const init = () => {
+        console.log('💫 电子爱人已复活！当前版本：v1.1');
 document.addEventListener('DOMContentLoaded', () => {
     if (!('localStorage' in window)) {
         alert('您的浏览器不支持本地存储功能，部分功能将无法使用');
@@ -867,4 +919,5 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => location.reload(), 20000);
     }
 });
-
+/* 页面加载时启动 */
+document.addEventListener('DOMContentLoaded', ResourceTracker.init);
