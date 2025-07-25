@@ -174,18 +174,33 @@
     </div>
 </div>
 
-   <script src="script.js"></script>
+<script src="script.js"></script>
 <script>
-  // 双重保险初始化
   function initApp() {
     if (window.ResourceTracker) {
+      console.log("✅ ResourceTracker 加载成功，开始初始化");
       ResourceTracker.init();
     } else {
-      console.error("ResourceTracker 仍未定义，请检查：\n1. script.js 是否加载成功\n2. 控制台是否有404错误");
-      document.body.innerHTML = '<div style="padding:20px;color:red">系统初始化失败，请检查控制台错误</div>';
+      console.error("❌ 致命错误：请检查：\n1. script.js 是否成功加载\n2. 文件名是否为小写 script.js\n3. 控制台是否有404错误");
+      document.body.innerHTML = `
+        <div style="padding:20px;font-family:sans-serif;color:red;max-width:600px;margin:0 auto;">
+          <h2>系统初始化失败</h2>
+          <p>请按 F12 打开开发者工具，查看控制台错误信息</p>
+          <p>常见原因：</p>
+          <ul>
+            <li>script.js 文件未正确加载</li>
+            <li>浏览器缓存未更新</li>
+            <li>文件名大小写不匹配</li>
+          </ul>
+          <button onclick="location.reload()" style="padding:8px 16px;background:#ff6b6b;color:white;border:none;border-radius:4px;">
+            点击强制刷新
+          </button>
+        </div>
+      `;
     }
   }
   
+  // 双重触发保障
   if (document.readyState === 'complete') {
     initApp();
   } else {
