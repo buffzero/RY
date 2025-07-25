@@ -897,3 +897,17 @@ button:disabled:hover {
   transition:opacity .2s;
 }
 .btn-reset:hover{opacity:.85;}
+/* 一键撤销按钮 */
+.reset-category-btn {
+    background: #ff6b6b;
+    color: white;
+    border: none;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    margin-left: 10px;
+    cursor: pointer;
+}
+.reset-category-btn:hover {
+    background: #ff5252;
+}
