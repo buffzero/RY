@@ -838,7 +838,17 @@ input[type="checkbox"] {
     min-width: 10px;
   }
 }
-
+/* 移动端适配 */
+@media (max-width: 600px) {
+    .training-actions {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+    
+    .custom-consume-input {
+        width: 50px !important;
+        font-size: 12px !important;
+    }
+}
 /* ==================== 按钮微交互 ==================== */
 button {
   transition: 
@@ -858,6 +868,21 @@ button:disabled:hover {
   box-shadow: none !important;
 }
 
+/* 自定义核销部分 */
+.custom-consume {
+    background: var(--blue);
+    color: rgb(41, 41, 41);
+}
+
+.custom-consume-input {
+    width: 60px;
+    height: 28px;
+    padding: 4px 6px;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-sm);
+    text-align: center;
+    font-size: 14px;
+}
 
 
 /* === helper styles === */
