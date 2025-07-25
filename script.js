@@ -88,14 +88,15 @@ const ResourceTracker = (() => {
                 { name: '【历练·八】', required: 24, editable: true },
                 { name: '【历练·十】', required: 35, editable: true },
                 { name: '【历练·十二】', required: 47, editable: true }
-            ],
+            ]
+        },
+        trainingPresets: {
+            13: { 4: 6, 6: 12, 8: 24, 10: 16, 12: 1 },
+            15: { 4: 6, 6: 12, 8: 24, 10: 35, 12: 12 },
+            17: { 4: 6, 6: 12, 8: 24, 10: 35, 12: 47 }
         }
- trainingPresets: {
-        13: { 4: 6, 6: 12, 8: 24, 10: 16, 12: 1 },
-        15: { 4: 6, 6: 12, 8: 24, 10: 35, 12: 12 },
-        17: { 4: 6, 6: 12, 8: 24, 10: 35, 12: 47 }
-    }
-};
+    };
+
     // ==================== 状态管理 ====================
     let state = {
         // 基础状态
@@ -105,7 +106,7 @@ const ResourceTracker = (() => {
         // 材料收集状态
         materials: {},
         // 历练进度
-       training: {
+        training: {
             yinYang: GAME_DATA.training.yinYang.map(item => ({
                 completed: 0,
                 required: item.required,
@@ -204,7 +205,8 @@ const ResourceTracker = (() => {
                         state.training[category] = parsed.training[category].map((item, i) => ({
                             completed: item.completed || 0,
                             required: item.required >= 0 ? item.required : GAME_DATA.training[category][i].required,
-                            userModified: item.userModified || false
+                            userModified: item.userModified || false,
+                            tier: item.tier || 17 // 默认17修为
                         }));
                     }
                 });
@@ -215,7 +217,6 @@ const ResourceTracker = (() => {
             state = resetState();
         }
     };
-    
 
     // ==================== 渲染函数 ====================
 
@@ -239,7 +240,6 @@ const ResourceTracker = (() => {
         dom.fragments.value = state.fragments;
         dom.scrolls.value = state.scrolls;
     };
-
 
     // 目标密探元素
     const renderTargetSelection = () => {
@@ -336,7 +336,6 @@ const ResourceTracker = (() => {
         }).join('');
     };
 
-
     // 渲染所有历练类别
     const renderTraining = () => {
         renderTrainingCategory('yinYang', dom.yinYangTraining);
@@ -347,7 +346,7 @@ const ResourceTracker = (() => {
 
     // 渲染单个历练类别
     const renderTrainingCategory = (category, container) => {
-       const currentTier = state.training[category][0]?.tier || 17;
+        const currentTier = state.training[category][0]?.tier || 17;
         container.innerHTML = `
             <div class="training-category-title">
                 ${category === 'yinYang' ? '阴阳历练' : 
@@ -361,125 +360,75 @@ const ResourceTracker = (() => {
                     一键撤销
                 </button>
             </div>
-        // 主要渲染逻辑
-        container.innerHTML = GAME_DATA.training[category].map((item, index) => {
-            const trainingItem = state.training[category][index] || { completed: 0 };
-            
-            const required = trainingItem.userModified ? 
-                trainingItem.required : 
-                item.required;
-            const completed = trainingItem.completed || 0;
-            const isMet = required === 0 || completed >= required;
-            const remaining = required - completed;
-            return `
-                <div class="training-item">
-                    <div class="training-header">
-                        <div class="training-name">${item.name}</div>
-                        <div class="training-input-status">
-                            <input type="text"
-                                inputmode="numeric"
-                                class="training-count-input" 
-                                data-category="${category}" 
-                                data-index="${index}"
-                                value="${required}">
-                            <div class="sub-status-indicator ${isMet ? 'met' : 'not-met'}">
-                                ${isMet ? '已满足' : `${completed}/${required}`}
+            ${GAME_DATA.training[category].map((item, index) => {
+                const trainingItem = state.training[category][index] || { completed: 0 };
+                
+                const required = trainingItem.userModified ? 
+                    trainingItem.required : 
+                    item.required;
+                const completed = trainingItem.completed || 0;
+                const isMet = required === 0 || completed >= required;
+                const remaining = required - completed;
+                return `
+                    <div class="training-item">
+                        <div class="training-header">
+                            <div class="training-name">${item.name}</div>
+                            <div class="training-input-status">
+                                <input type="text"
+                                    inputmode="numeric"
+                                    class="training-count-input" 
+                                    data-category="${category}" 
+                                    data-index="${index}"
+                                    value="${required}">
+                                <div class="sub-status-indicator ${isMet ? 'met' : 'not-met'}">
+                                    ${isMet ? '已满足' : `${completed}/${required}`}
+                                </div>
                             </div>
                         </div>
+                        ${required > 0 ? renderCircles(required, completed) : ''}
+                        <div class="training-actions">
+                            <button class="consume-btn" 
+                                data-category="${category}" 
+                                data-index="${index}" 
+                                data-count="1"
+                                ${isMet ? 'disabled' : ''}>
+                                核销一次
+                            </button>
+                            <button class="consume-btn" 
+                                data-category="${category}" 
+                                data-index="${index}" 
+                                data-count="3"
+                                ${isMet || remaining < 3 ? 'disabled' : ''}>
+                                核销三次
+                            </button>
+                            <button class="consume-btn" 
+                                data-category="${category}" 
+                                data-index="${index}" 
+                                data-count="6"
+                                ${isMet || remaining < 6 ? 'disabled' : ''}>
+                                核销六次
+                            </button>
+                            <button class="consume-btn custom-consume" 
+                                data-category="${category}" 
+                                data-index="${index}">
+                                核销指定次数
+                            </button>
+                            <input type="number" min="1" max="${remaining}" 
+                                class="custom-consume-input" 
+                                data-category="${category}" 
+                                data-index="${index}"
+                                placeholder="次数">
+                            <button class="undo-btn" 
+                                data-category="${category}" 
+                                data-index="${index}"
+                                ${completed <= 0 ? 'disabled' : ''}>
+                                撤销
+                            </button>
+                        </div>
                     </div>
-                    ${required > 0 ? renderCircles(required, completed) : ''}
-                  <div class="training-actions">
-    <button class="consume-btn" 
-        data-category="${category}" 
-        data-index="${index}" 
-        data-count="1"
-        ${isMet ? 'disabled' : ''}>
-        核销一次
-    </button>
-    <button class="consume-btn" 
-        data-category="${category}" 
-        data-index="${index}" 
-        data-count="3"
-        ${isMet || remaining < 3 ? 'disabled' : ''}>
-        核销三次
-    </button>
-    <button class="consume-btn" 
-        data-category="${category}" 
-        data-index="${index}" 
-        data-count="6"
-        ${isMet || remaining < 6 ? 'disabled' : ''}>
-        核销六次
-    </button>
-    <button class="consume-btn custom-consume" 
-        data-category="${category}" 
-        data-index="${index}">
-        核销指定次数
-    </button>
-    <input type="number" min="1" max="${remaining}" 
-        class="custom-consume-input" 
-        data-category="${category}" 
-        data-index="${index}"
-        placeholder="次数">
-    <button class="undo-btn" 
-        data-category="${category}" 
-        data-index="${index}"
-        ${completed <= 0 ? 'disabled' : ''}>
-        撤销
-    </button>
-</div>
-                </div>
-            `;
-        }).join('');
-        
-     /**
-     * 处理修为切换（全新功能）
-     */
-    const handleTierChange = (category, tier) => {
-        const floors = [4, 6, 8, 10, 12]; // 对应五个历练层级
-        
-        state.training[category].forEach((item, index) => {
-            if (!item.userModified) { // 只修改未手动调整过的
-                item.required = GAME_DATA.trainingPresets[tier][floors[index]];
-            }
-            item.tier = tier; // 更新修为等级
-        });
-        
-        updateAndSave(); // 触发界面更新
-    };
-
-    /**
-     * 一键撤销分类（全新功能）
-     */
-    const handleResetCategory = (category) => {
-        if (confirm(`确定要重置【${category}】的所有进度吗？`)) {
-            state.training[category].forEach(item => {
-                item.completed = 0;
-            });
-            // 清除相关历史记录
-            state.trainingHistory = state.trainingHistory.filter(
-                record => record.category !== category
-            );
-            updateAndSave();
-        }
-    };
-
-        // 恢复编辑状态
-        if (editData) {
-            const input = container.querySelector(
-                `.training-count-input[data-index="${editData.index}"]`
-            );
-            if (input) {
-                input.value = editData.value;
-                input.focus();
-                if (input.value.length > 0) {
-                    try {
-                        input.setSelectionRange(editData.cursorPos, editData.cursorPos);
-                    } catch (e) {
-                        console.log('光标设置跳过:', e);
-                    }
-                }
-            }
-        }
+                `;
+            }).join('')}
+        `;
     };
     
     // 渲染圆圈进度 (自适应宽度布局)
@@ -533,40 +482,39 @@ const ResourceTracker = (() => {
 
     // ==================== 操作处理 ====================
 
-// 处理核销操作
-const handleConsume = (category, index, count) => {
-    const trainingItem = state.training[category][index] || { completed: 0 };
-    const required = trainingItem.required || 0;
-    const completed = trainingItem.completed || 0;
-    const remaining = required - completed; // 修复1: 正确计算剩余次数
-    
-    // 修复2: 添加输入验证
-    if (isNaN(count) || count <= 0) {
-        alert('核销次数必须大于0');
-        return;
-    }
-    
-    if (count > remaining) {
-        alert(`核销次数不能超过剩余次数（${remaining}）`);
-        return;
-    }
-    
-    const actualCount = Math.min(count, remaining);
-    if (actualCount <= 0) return;
-    
-    // 记录操作历史
-    state.trainingHistory.push({
-        category,
-        index,
-        previousCount: completed,
-        count: actualCount,
-        timestamp: new Date().toISOString()
-    });
-    
-    // 更新状态
-    state.training[category][index].completed = completed + actualCount;
-    updateAndSave();
-};
+    // 处理核销操作
+    const handleConsume = (category, index, count) => {
+        const trainingItem = state.training[category][index] || { completed: 0 };
+        const required = trainingItem.required || 0;
+        const completed = trainingItem.completed || 0;
+        const remaining = required - completed;
+        
+        if (isNaN(count) || count <= 0) {
+            alert('核销次数必须大于0');
+            return;
+        }
+        
+        if (count > remaining) {
+            alert(`核销次数不能超过剩余次数（${remaining}）`);
+            return;
+        }
+        
+        const actualCount = Math.min(count, remaining);
+        if (actualCount <= 0) return;
+        
+        // 记录操作历史
+        state.trainingHistory.push({
+            category,
+            index,
+            previousCount: completed,
+            count: actualCount,
+            timestamp: new Date().toISOString()
+        });
+        
+        // 更新状态
+        state.training[category][index].completed = completed + actualCount;
+        updateAndSave();
+    };
     
     // 处理撤销操作
     const handleUndo = (category, index) => {
@@ -588,59 +536,89 @@ const handleConsume = (category, index, count) => {
         }
     };
 
+    /**
+     * 处理修为切换
+     */
+    const handleTierChange = (category, tier) => {
+        const floors = [4, 6, 8, 10, 12]; // 对应五个历练层级
+        
+        state.training[category].forEach((item, index) => {
+            if (!item.userModified) { // 只修改未手动调整过的
+                item.required = GAME_DATA.trainingPresets[tier][floors[index]];
+            }
+            item.tier = tier; // 更新修为等级
+        });
+        
+        updateAndSave(); // 触发界面更新
+    };
+
+    /**
+     * 一键撤销分类
+     */
+    const handleResetCategory = (category) => {
+        if (confirm(`确定要重置【${category}】的所有进度吗？`)) {
+            state.training[category].forEach(item => {
+                item.completed = 0;
+            });
+            // 清除相关历史记录
+            state.trainingHistory = state.trainingHistory.filter(
+                record => record.category !== category
+            );
+            updateAndSave();
+        }
+    };
+
     // ==================== 事件处理 ====================
 
     // 设置事件监听器
     const setupEventListeners = () => {
         // 自定义核销按钮
-document.addEventListener('click', (e) => {
-    if (e.target.classList.contains('custom-consume')) {
-        const btn = e.target;
-        const category = btn.dataset.category;
-        const index = parseInt(btn.dataset.index);
-        
-        // 找到对应的输入框
-        const input = btn.nextElementSibling;
-        if (!input || !input.classList.contains('custom-consume-input')) {
-            console.error('找不到自定义核销输入框');
-            return;
-        }
-        
-        // 获取输入值
-        const count = parseInt(input.value);
-        if (isNaN(count) || count <= 0) {
-            alert('请输入有效的核销次数');
-            return;
-        }
-        
-        // 处理核销
-        handleConsume(category, index, count);
-        e.stopPropagation();
-    }
-        // 新增修为切换监听
-        document.addEventListener('change', (e) => {
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('custom-consume')) {
+                const btn = e.target;
+                const category = btn.dataset.category;
+                const index = parseInt(btn.dataset.index);
+                
+                // 找到对应的输入框
+                const input = btn.nextElementSibling;
+                if (!input || !input.classList.contains('custom-consume-input')) {
+                    console.error('找不到自定义核销输入框');
+                    return;
+                }
+                
+                // 获取输入值
+                const count = parseInt(input.value);
+                if (isNaN(count) || count <= 0) {
+                    alert('请输入有效的核销次数');
+                    return;
+                }
+                
+                // 处理核销
+                handleConsume(category, index, count);
+                e.stopPropagation();
+            }
+
+            // 修为切换监听
             if (e.target.classList.contains('tier-select')) {
                 const category = e.target.dataset.category;
                 const tier = parseInt(e.target.value);
                 handleTierChange(category, tier);
             }
-        });
 
-        // 新增一键撤销监听
-        document.addEventListener('click', (e) => {
+            // 一键撤销监听
             if (e.target.classList.contains('reset-category-btn')) {
                 const category = e.target.dataset.category;
                 handleResetCategory(category);
             }
         });
-});
 
-// 确保自定义输入框不触发其他事件
-document.addEventListener('click', (e) => {
-    if (e.target.classList.contains('custom-consume-input')) {
-        e.stopPropagation();
-    }
-});
+        // 确保自定义输入框不触发其他事件
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('custom-consume-input')) {
+                e.stopPropagation();
+            }
+        });
+
         // 目标选择变化监听
         document.addEventListener('change', (e) => {
             if (e.target.matches('.target-section input[type="checkbox"]')) {
@@ -793,7 +771,8 @@ document.addEventListener('click', (e) => {
             GAME_DATA.training[category].map(item => ({
                 completed: 0,
                 required: item.required,
-                userModified: false
+                userModified: false,
+                tier: 17 // 默认17修为
             }));
 
         return {
@@ -842,70 +821,9 @@ document.addEventListener('click', (e) => {
 
     // ==================== 公共接口 ====================
     return { init };
-
-/* === Added by helper: per-category reset button & tier options === */
-function addCategoryResetButtons(){ 
-  document.querySelectorAll('.training-category').forEach(cat=>{
-    const title=cat.querySelector('.training-category-title');
-    if(!title)return;
-    // avoid duplicate
-    if(title.querySelector('.btn-reset')) return;
-    const btn=document.createElement('button');
-    btn.textContent='一键撤销';
-    btn.className='btn-reset';
-    btn.style.marginLeft='8px';
-    btn.onclick=()=>{
-      // loop through undo buttons until all counts cleared
-      cat.querySelectorAll('.undo-btn:not(:disabled)').forEach(b=>b.click());
-    };
-    title.appendChild(btn);
-  });
-}
-// append extra tier options if select exists
-function addExtraTierOptions(){
-  document.querySelectorAll('select[target-tier]').forEach(sel=>{
-    [13,15,17].forEach(v=>{
-      if(![...sel.options].some(o=>parseInt(o.value)===v)){
-        const opt=document.createElement('option');opt.value=v;opt.textContent=v;
-        sel.appendChild(opt);
-      }
-    });
-  });
-}
-document.addEventListener('DOMContentLoaded',()=>{ 
-  addCategoryResetButtons(); 
-  addExtraTierOptions();
-});
-/* === helper end === */
-
-/* === helper: preset runs for tier 13/15/17 === */
-const presetRuns = {
-  13:{4:6,6:12,8:24,10:16,12:1},
-  15:{4:6,6:12,8:24,10:35,12:12},
-  17:{4:6,6:12,8:24,10:35,12:47}
-};
-// add event listeners to tier selects
-document.querySelectorAll('.tier-select').forEach(sel=>{
-  sel.addEventListener('change',()=>{
-    const tier=parseInt(sel.value);
-    const path=sel.closest('.path-wrapper')?.dataset.path;
-    if(presetRuns[tier] && path){
-      Object.entries(presetRuns[tier]).forEach(([floor,count])=>{
-        const inp=document.querySelector(`input[data-path="${path}"][data-floor="${floor}"]`);
-        if(inp){
-          inp.value=count;
-          inp.dispatchEvent(new Event('input'));
-        }
-      });
-    }
-  });
-});
-/* === helper end === */
 })();
 
 // ==================== 初始化 ====================
-    const init = () => {
-        console.log('💫 电子爱人已复活！当前版本：v1.1');
 document.addEventListener('DOMContentLoaded', () => {
     if (!('localStorage' in window)) {
         alert('您的浏览器不支持本地存储功能，部分功能将无法使用');
@@ -919,5 +837,3 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => location.reload(), 20000);
     }
 });
-/* 页面加载时启动 */
-document.addEventListener('DOMContentLoaded', ResourceTracker.init);
