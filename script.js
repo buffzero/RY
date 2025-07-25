@@ -362,21 +362,36 @@ const loadData = () => {
     };
 
     // 渲染单个历练类别
-    const renderTrainingCategory = (category, container) => {
-        const currentTier = state.training[category][0]?.tier || 17;
-        container.innerHTML = `
-            <div class="training-category-title">
-                ${category === 'yinYang' ? '阴阳历练' : 
-                  category === 'windFire' ? '风火历练' : '地水历练'}
-                <select class="tier-select" data-category="${category}">
-                    <option value="13" ${currentTier === 13 ? 'selected' : ''}>修为13</option>
-                    <option value="15" ${currentTier === 15 ? 'selected' : ''}>修为15</option>
-                    <option value="17" ${currentTier === 17 ? 'selected' : ''}>修为17</option>
-                </select>
-                <button class="reset-category-btn" data-category="${category}">
-                    一键撤销
-                </button>
-            </div>
+   const renderTrainingCategory = (category, container) => {
+    // 1. 更健壮的数据检查
+    if (!state.training[category]?.length) {
+        console.error(`错误：${category} 的历练数据为空`);
+        return;
+    }
+
+    const currentTier = state.training[category][0].tier; // 不再需要默认值
+    
+    // 2. 打印详细调试信息
+    console.group(`[DEBUG] 渲染 ${category} 数据`);
+    console.log('当前修为:', currentTier);
+    console.log('各层级要求次数:', 
+        state.training[category].map(item => item.required));
+    console.groupEnd();
+
+    // 3. 渲染逻辑（保持不变）
+    container.innerHTML = `
+        <div class="training-category-title">
+            ${category === 'yinYang' ? '阴阳历练' : ...}
+            <select class="tier-select" data-category="${category}">
+                ${[13, 15, 17].map(tier => `
+                    <option value="${tier}" 
+                        ${currentTier === tier ? 'selected' : ''}>
+                        修为${tier}
+                    </option>
+                `).join('')}
+            </select>
+            <button class="reset-category-btn">一键撤销</button>
+        </div>
             ${GAME_DATA.training[category].map((item, index) => {
                 const trainingItem = state.training[category][index] || { completed: 0 };
                 
@@ -556,19 +571,21 @@ const loadData = () => {
     /**
      * 处理修为切换
      */
-    const handleTierChange = (category, tier) => {
-        const floors = [4, 6, 8, 10, 12]; // 对应五个历练层级
-        
-        state.training[category].forEach((item, index) => {
-            if (!item.userModified) { // 只修改未手动调整过的
-                item.required = GAME_DATA.trainingPresets[tier][floors[index]];
-            }
-            item.tier = tier; // 更新修为等级
-        });
-        
-        updateAndSave(); // 触发界面更新
-    };
+  const handleTierChange = (category, tier) => {
+    const floors = [4, 6, 8, 10, 12]; // 必须与 trainingPresets 的键完全一致
+    
+    state.training[category].forEach((item, index) => {
+        const floor = floors[index];
+        if (!item.userModified) {
+            // 从预设中读取对应层级的次数
+            item.required = GAME_DATA.trainingPresets[tier][floor];
+        }
+        item.tier = tier; // 强制更新修为等级
+    });
 
+    updateAndSave(); // 触发界面重新渲染
+    console.log(`切换到修为${tier}`, state.training[category]); // 调试日志
+};
     /**
      * 一键撤销分类
      */
@@ -588,14 +605,15 @@ const loadData = () => {
     // ==================== 事件处理 ====================
 
     // 设置事件监听器
-    const setupEventListeners = () => {
-        // 自定义核销按钮
-        document.addEventListener('click', (e) => {
-            if (e.target.classList.contains('custom-consume')) {
-                const btn = e.target;
-                const category = btn.dataset.category;
-                const index = parseInt(btn.dataset.index);
-                
+   const setupEventListeners = () => {
+    // 使用事件委托，避免重复绑定
+    document.addEventListener('change', (e) => {
+        if (e.target.classList.contains('tier-select')) {
+            const category = e.target.dataset.category;
+            const tier = parseInt(e.target.value);
+            handleTierChange(category, tier);
+      }
+    });
                 // 找到对应的输入框
                 const input = btn.nextElementSibling;
                 if (!input || !input.classList.contains('custom-consume-input')) {
