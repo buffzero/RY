@@ -851,6 +851,5 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (error) {
         console.error('初始化失败:', error);
         alert('系统初始化失败，请刷新页面重试');
-        setTimeout(() => location.reload(), 20000);
     }
 });
