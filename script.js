@@ -172,51 +172,66 @@ const ResourceTracker = (() => {
     };
 
     const setupDOM = () => {
-        dom.container = document.querySelector(CONFIG.containerId);
-        Object.entries(CONFIG.elements).forEach(([key, selector]) => {
-            dom[key] = document.querySelector(selector);
-        });
-    };
+  // 确保容器存在
+  dom.container = document.querySelector(CONFIG.containerId);
+  if (!dom.container) {
+    throw new Error('主容器 #resourceTracker 未找到');
+  }
 
-    const loadData = () => {
-        try {
-            const saved = localStorage.getItem(CONFIG.storageKey);
-            if (saved) {
-                const parsed = JSON.parse(saved);
-                
-                // 初始化材料状态
-                const materials = {};
-                GAME_DATA.materials.forEach(material => {
-                    materials[material.id] = parsed.materials?.[material.id] || false;
-                });
-                
-                // 合并状态
-                state = {
-                    ...resetState(),
-                    ...parsed,
-                    materials,
-                    targetSelection: parsed.targetSelection || resetState().targetSelection,
-                    trainingHistory: parsed.trainingHistory || []
-                };
+  // 初始化所有元素引用
+  Object.entries(CONFIG.elements).forEach(([key, selector]) => {
+    const element = document.querySelector(selector);
+    if (!element && key !== 'lastUpdated') { // lastUpdated 是可选的
+      console.warn(`⚠️ 元素未找到: ${selector}`);
+    }
+    dom[key] = element;
+  });
 
-                // 确保历练状态正确加载
-                ['yinYang', 'windFire', 'earthWater'].forEach(category => {
-                    if (parsed.training?.[category]) {
-                        state.training[category] = parsed.training[category].map((item, i) => ({
-                            completed: item.completed || 0,
-                            required: item.required >= 0 ? item.required : GAME_DATA.training[category][i].required,
-                            userModified: item.userModified || false,
-                            tier: item.tier || 17 // 默认17修为
-                        }));
-                    }
-                });
-            }
-            updateLastUpdated();
-        } catch (e) {
-            console.error('数据加载失败:', e);
-            state = resetState();
+  // 特殊处理必须存在的元素
+  if (!dom.moneyCheck || !dom.fragments || !dom.scrolls) {
+    throw new Error('关键表单元素未找到');
+  }
+};
+
+const loadData = () => {
+  try {
+    const saved = localStorage.getItem(CONFIG.storageKey);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      
+      // 初始化材料状态
+      const materials = {};
+      GAME_DATA.materials.forEach(material => {
+        materials[material.id] = parsed.materials?.[material.id] || false;
+      });
+      
+      // 合并状态
+      state = {
+        ...resetState(),
+        ...parsed,
+        materials,
+        targetSelection: parsed.targetSelection || resetState().targetSelection,
+        trainingHistory: parsed.trainingHistory || []
+      };
+
+      // 确保历练状态正确加载
+      ['yinYang', 'windFire', 'earthWater'].forEach(category => {
+        if (parsed.training?.[category]) {
+          state.training[category] = parsed.training[category].map((item, i) => ({
+            completed: item.completed || 0,
+            required: item.required >= 0 ? item.required : GAME_DATA.training[category][i].required,
+            userModified: item.userModified || false,
+            tier: item.tier || 17 // 默认17修为
+          }));
         }
-    };
+      });
+    }
+    updateLastUpdated();
+  } catch (e) {
+    console.error('数据加载失败:', e);
+    state = resetState();
+  }
+};
 
     // ==================== 渲染函数 ====================
 
