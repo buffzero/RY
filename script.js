@@ -171,22 +171,24 @@ const ResourceTracker = (() => {
         }
     };
 
-    const setupDOM = () => {
-  // 确保容器存在
-  dom.container = document.querySelector(CONFIG.containerId);
-  if (!dom.container) {
-    throw new Error('主容器 #resourceTracker 未找到');
-  }
-
-  // 初始化所有元素引用
-  Object.entries(CONFIG.elements).forEach(([key, selector]) => {
-    const element = document.querySelector(selector);
-    if (!element && key !== 'lastUpdated') { // lastUpdated 是可选的
-      console.warn(`⚠️ 元素未找到: ${selector}`);
+  const setupDOM = () => {
+    // 确保容器存在
+    dom.container = document.querySelector(CONFIG.containerId);
+    if (!dom.container) {
+        throw new Error('主容器 #resourceTracker 未找到');
     }
-    dom[key] = element;
-  });
 
+    // 初始化所有元素引用
+    Object.entries(CONFIG.elements).forEach(([key, selector]) => {
+        try {
+            dom[key] = document.querySelector(selector);
+            if (!dom[key] && key !== 'lastUpdated') {
+                console.warn(`⚠️ 元素未找到: ${selector}`);
+            }
+        } catch (error) {
+            console.error(`初始化元素 ${selector} 失败:`, error);
+        }
+    });
   // 特殊处理必须存在的元素
   if (!dom.moneyCheck || !dom.fragments || !dom.scrolls) {
     throw new Error('关键表单元素未找到');
