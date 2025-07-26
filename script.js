@@ -96,20 +96,18 @@ const ResourceTracker = (() => {
             ]
         },
         trainingPresets: {
-    // 修为13的预设
-    13: { 
-        4: 6,   // 历练四需要6次
-        6: 12,  // 历练六需要12次
-        8: 24,  // 历练八需要24次
-        10: 16, // 历练十需要16次
-        12: 1   // 历练十二需要1次
-    },
-    // 修为15的预设
-    15: { 4: 6, 6: 12, 8: 24, 10: 35, 12: 12 },
-    // 修为17的预设
-    17: { 4: 6, 6: 12, 8: 24, 10: 35, 12: 47 }
-}
+            13: { 
+                4: 6,   // 历练四需要6次
+                6: 12,  // 历练六需要12次
+                8: 24,  // 历练八需要24次
+                10: 16, // 历练十需要16次
+                12: 1   // 历练十二需要1次
+            },
+            15: { 4: 6, 6: 12, 8: 24, 10: 35, 12: 12 },
+            17: { 4: 6, 6: 12, 8: 24, 10: 35, 12: 47 }
+        }
     };
+
     // 格式化日期显示
     const formatDate = (date) => {
         return date.toLocaleString('zh-CN', {
@@ -122,6 +120,7 @@ const ResourceTracker = (() => {
             hour12: false
         }).replace(/\//g, '-');
     };
+
     // 更新时间戳显示
     const updateLastUpdated = () => {
         if (state.lastUpdated && dom.lastUpdated) {
@@ -139,10 +138,10 @@ const ResourceTracker = (() => {
         // 材料收集状态
         materials: {},
         trainingCompletions: {
-        yinYang: {13: 0, 15: 0, 17: 0},
-        windFire: {13: 0, 15: 0, 17: 0},
-        earthWater: {13: 0, 15: 0, 17: 0}
-    },
+            yinYang: {13: 0, 15: 0, 17: 0},
+            windFire: {13: 0, 15: 0, 17: 0},
+            earthWater: {13: 0, 15: 0, 17: 0}
+        },
         // 历练进度
         training: {
             yinYang: GAME_DATA.training.yinYang.map(item => ({
@@ -208,7 +207,8 @@ const ResourceTracker = (() => {
             alert('系统初始化失败，请刷新页面重试');
         }
     };
-   // ==================== loadData 函数 ====================
+
+    // ==================== loadData 函数 ====================
     const loadData = () => {
         try {
             const saved = localStorage.getItem(CONFIG.storageKey);
@@ -252,70 +252,73 @@ const ResourceTracker = (() => {
             tier: item.tier || 17
         }));
     };
-      // 新增的检查历练完成方法
-   const checkTrainingCompletion = (category, tier) => {
-    const floors = [4, 6, 8, 10, 12];
-    return state.training[category].every((item, index) => {
-        const floor = floors[index];
-        const required = GAME_DATA.trainingPresets[tier][floor];
-        return item.completed >= required;
-    });
-};
-// ==================== setupDOM 函数 ====================
-const setupDOM = () => {
-  try {
-    // 1. 检查主容器
-    dom.container = document.querySelector(CONFIG.containerId);
-    if (!dom.container) {
-      throw new Error('主容器 #resourceTracker 未找到');
-    }
 
-    // 2. 检查关键必需元素（会阻断运行的元素）
-    const criticalElements = [
-      'classStatus', 
-      'attributeStatus',
-      'materialsList',
-      'moneyCheck',
-      'fragments',
-      'scrolls'
-    ];
-    
-    criticalElements.forEach(key => {
-      const selector = CONFIG.elements[key];
-      dom[key] = document.querySelector(selector);
-      if (!dom[key]) {
-        throw new Error(`关键元素 ${selector} 未找到`);
-      }
-    });
+    // 检查历练完成情况
+    const checkTrainingCompletion = (category, tier) => {
+        const floors = [4, 6, 8, 10, 12];
+        return state.training[category].every((item, index) => {
+            const floor = floors[index];
+            const required = GAME_DATA.trainingPresets[tier][floor];
+            return item.completed >= required;
+        });
+    };
 
-    // 3. 初始化其他元素（非关键元素只警告不报错）
-    Object.entries(CONFIG.elements).forEach(([key, selector]) => {
-      if (!criticalElements.includes(key)) { // 跳过已检查的关键元素
+    // ==================== setupDOM 函数 ====================
+    const setupDOM = () => {
         try {
-          dom[key] = document.querySelector(selector);
-          if (!dom[key] && key !== 'lastUpdated') {
-            console.warn(`⚠️ 非关键元素未找到: ${selector}`);
-          }
-        } catch (error) {
-          console.error(`初始化元素 ${selector} 失败:`, error);
-        }
-      }
-    });
+            // 1. 检查主容器
+            dom.container = document.querySelector(CONFIG.containerId);
+            if (!dom.container) {
+                throw new Error('主容器 #resourceTracker 未找到');
+            }
 
-  } catch (e) {
-    console.error('DOM初始化失败:', e);
-    document.body.innerHTML = `
-      <div style="color:red;padding:20px;font-family:sans-serif">
-        <h2>系统初始化失败</h2>
-        <p>${e.message}</p>
-        <button onclick="location.reload()" style="padding:8px 16px;margin-top:10px;">
-          刷新页面
-        </button>
-      </div>
-    `;
-    throw e; // 阻止后续执行
-  }
-};
+            // 2. 检查关键必需元素
+            const criticalElements = [
+                'classStatus', 
+                'attributeStatus',
+                'materialsList',
+                'moneyCheck',
+                'fragments',
+                'scrolls'
+            ];
+            
+            criticalElements.forEach(key => {
+                const selector = CONFIG.elements[key];
+                dom[key] = document.querySelector(selector);
+                if (!dom[key]) {
+                    throw new Error(`关键元素 ${selector} 未找到`);
+                }
+            });
+
+            // 3. 初始化其他元素
+            Object.entries(CONFIG.elements).forEach(([key, selector]) => {
+                if (!criticalElements.includes(key)) {
+                    try {
+                        dom[key] = document.querySelector(selector);
+                        if (!dom[key] && key !== 'lastUpdated') {
+                            console.warn(`⚠️ 非关键元素未找到: ${selector}`);
+                        }
+                    } catch (error) {
+                        console.error(`初始化元素 ${selector} 失败:`, error);
+                    }
+                }
+            });
+
+        } catch (e) {
+            console.error('DOM初始化失败:', e);
+            document.body.innerHTML = `
+                <div style="color:red;padding:20px;font-family:sans-serif">
+                    <h2>系统初始化失败</h2>
+                    <p>${e.message}</p>
+                    <button onclick="location.reload()" style="padding:8px 16px;margin-top:10px;">
+                        刷新页面
+                    </button>
+                </div>
+            `;
+            throw e;
+        }
+    };
+
     // ==================== 渲染函数 ====================
 
     // 渲染整个界面
@@ -326,6 +329,7 @@ const setupDOM = () => {
         updateBasicUI(expStatus);
         renderTargetSelection();
         renderClassStatus(baseConditionsMet);
+        renderAttributeStatus();
         renderMaterials();
         renderTraining();
     };
@@ -361,16 +365,16 @@ const setupDOM = () => {
     // 渲染职业状态
     const renderClassStatus = (baseConditionsMet) => {
         dom.classStatus.innerHTML = GAME_DATA.classes.map(className => {
-          const isReady = checkClassReady(className, baseConditionsMet);
-          const classKey = getClassKey(className);
-          return `
-            <div class="status-item ${classKey}">
-              <span>${className}</span>
-              <span class="status-indicator ${isReady ? 'ready' : 'pending'}">
-                ${isReady ? '可满级' : '待沉淀'}
-              </span>
-            </div>
-          `;
+            const isReady = checkClassReady(className, baseConditionsMet);
+            const classKey = getClassKey(className);
+            return `
+                <div class="status-item ${classKey}">
+                    <span>${className}</span>
+                    <span class="status-indicator ${isReady ? 'ready' : 'pending'}">
+                        ${isReady ? '可满级' : '待沉淀'}
+                    </span>
+                </div>
+            `;
         }).join('');
     };
     
@@ -434,135 +438,134 @@ const setupDOM = () => {
         }).join('');
     };
 
-    // 渲染所有历练类别（保持不变）
-const renderTraining = () => {
-    renderTrainingCategory('yinYang', dom.yinYangTraining);
-    renderTrainingCategory('windFire', dom.windFireTraining);
-    renderTrainingCategory('earthWater', dom.earthWaterTraining);
-    renderAttributeStatus(); // 保持属性状态渲染
-};
+    // 渲染所有历练类别
+    const renderTraining = () => {
+        renderTrainingCategory('yinYang', dom.yinYangTraining);
+        renderTrainingCategory('windFire', dom.windFireTraining);
+        renderTrainingCategory('earthWater', dom.earthWaterTraining);
+    };
 
-// 替换为新的渲染单个历练类别函数
-const renderTrainingCategory = (category, container) => {
-    const floors = [4, 6, 8, 10, 12];
-    
-    // 健壮性检查
-    if (!state.training[category]?.length) {
-        console.error(`错误：${category} 的历练数据为空`);
-        return;
-    }
+    // 渲染单个历练类别
+    const renderTrainingCategory = (category, container) => {
+        const floors = [4, 6, 8, 10, 12];
+        
+        if (!state.training[category]?.length) {
+            console.error(`错误：${category} 的历练数据为空`);
+            return;
+        }
 
-    // 获取分类名称
-    const categoryName = category === 'yinYang' ? '阴阳历练' : 
-                       category === 'windFire' ? '风火历练' : '地水历练';
-    
-    // 创建完成次数徽章
-    const completionBadges = [13, 15, 17].map(tier => {
-    const count = state.trainingCompletions[category][tier] || 0;
-    const isComplete = checkTrainingCompletion(category, tier);
-    
-    // 只有当前完成或历史有完成记录时才显示
-    if (count > 0 || isComplete) {
-        return `
-            <span class="completion-badge tier-${tier}" 
-                  title="${categoryName} 修为${tier}已完成${count}次">
-                ${tier}×${isComplete ? count + 1 : count}
-            </span>
-        `;
-    }
-    return '';
-}).filter(badge => badge !== '').join('');
+        // 获取分类名称
+        const categoryName = category === 'yinYang' ? '阴阳历练' : 
+                           category === 'windFire' ? '风火历练' : '地水历练';
+        
+        // 创建完成次数徽章
+        const completionBadges = [13, 15, 17].map(tier => {
+            const count = state.trainingCompletions[category][tier] || 0;
+            const isComplete = checkTrainingCompletion(category, tier);
+            
+            // 只有当前完成或历史有完成记录时才显示
+            if (count > 0 || isComplete) {
+                return `
+                    <span class="completion-badge tier-${tier} ${isComplete ? 'completed' : ''}" 
+                          title="${categoryName} 修为${tier}已完成${count}次">
+                        ${tier}×${isComplete ? count + 1 : count}
+                    </span>
+                `;
+            }
+            return '';
+        }).filter(badge => badge !== '').join('');
 
-    container.innerHTML = `
-        <div class="training-category-title">
-            <span class="category-name">${categoryName}</span>
-            <div class="completion-badges">${completionBadges}</div>
-            <div class="training-controls">
-                <select class="tier-select" data-category="${category}">
-                    ${[13, 15, 17].map(tier => `
-                        <option value="${tier}" 
-                            ${state.training[category][0].tier === tier ? 'selected' : ''}>
-                            修为${tier}
-                        </option>
-                    `).join('')}
-                </select>
-                <button class="reset-category-btn" data-category="${category}">一键撤销</button>
+        container.innerHTML = `
+            <div class="training-category-title">
+                <span class="category-name">${categoryName}</span>
+                <div class="completion-badges">${completionBadges}</div>
+                <div class="training-controls">
+                    <select class="tier-select" data-category="${category}">
+                        ${[13, 15, 17].map(tier => `
+                            <option value="${tier}" 
+                                ${state.training[category][0].tier === tier ? 'selected' : ''}>
+                                修为${tier}
+                            </option>
+                        `).join('')}
+                    </select>
+                    <button class="reset-category-btn" data-category="${category}">一键撤销</button>
+                </div>
             </div>
-        </div>
-        ${GAME_DATA.training[category].map((item, index) => {
-            const trainingItem = state.training[category][index] || { completed: 0 };
-            const floor = floors[index];
-            
-            const required = trainingItem.userModified ?
-                trainingItem.required :
-                GAME_DATA.trainingPresets[trainingItem.tier][floor];
+            ${GAME_DATA.training[category].map((item, index) => {
+                const trainingItem = state.training[category][index] || { completed: 0 };
+                const floor = floors[index];
                 
-            const completed = trainingItem.completed || 0;
-            const isMet = completed >= required;
-            const remaining = required - completed;
-            
-            return `
-                <div class="training-item">
-                    <div class="training-header">
-                        <div class="training-name">${item.name}</div>
-                        <div class="training-input-status">
-                            <input type="text"
-                                inputmode="numeric"
-                                class="training-count-input" 
-                                data-category="${category}" 
-                                data-index="${index}"
-                                value="${required}">
-                            <div class="sub-status-indicator ${isMet ? 'met' : 'not-met'}">
-                                ${isMet ? '已满足' : `${completed}/${required}`}
+                const required = trainingItem.userModified ?
+                    trainingItem.required :
+                    GAME_DATA.trainingPresets[trainingItem.tier][floor];
+                    
+                const completed = trainingItem.completed || 0;
+                const isMet = completed >= required;
+                const remaining = required - completed;
+                
+                return `
+                    <div class="training-item">
+                        <div class="training-header">
+                            <div class="training-name">${item.name}</div>
+                            <div class="training-input-status">
+                                <input type="text"
+                                    inputmode="numeric"
+                                    class="training-count-input" 
+                                    data-category="${category}" 
+                                    data-index="${index}"
+                                    value="${required}">
+                                <div class="sub-status-indicator ${isMet ? 'met' : 'not-met'}">
+                                    ${isMet ? '已满足' : `${completed}/${required}`}
+                                </div>
                             </div>
                         </div>
+                        ${required > 0 ? renderCircles(required, completed) : ''}
+                        <div class="training-actions">
+                            <button class="consume-btn" 
+                                data-category="${category}" 
+                                data-index="${index}" 
+                                data-count="1"
+                                ${isMet ? 'disabled' : ''}>
+                                核销一次
+                            </button>
+                            <button class="consume-btn" 
+                                data-category="${category}" 
+                                data-index="${index}" 
+                                data-count="3"
+                                ${isMet || remaining < 3 ? 'disabled' : ''}>
+                                核销三次
+                            </button>
+                            <button class="consume-btn" 
+                                data-category="${category}" 
+                                data-index="${index}" 
+                                data-count="6"
+                                ${isMet || remaining < 6 ? 'disabled' : ''}>
+                                核销六次
+                            </button>
+                            <button class="consume-btn custom-consume" 
+                                data-category="${category}" 
+                                data-index="${index}">
+                                核销指定次数
+                            </button>
+                            <input type="number" min="1" max="${remaining}" 
+                                class="custom-consume-input" 
+                                data-category="${category}" 
+                                data-index="${index}"
+                                placeholder="次数">
+                            <button class="undo-btn" 
+                                data-category="${category}" 
+                                data-index="${index}"
+                                ${completed <= 0 ? 'disabled' : ''}>
+                                撤销
+                            </button>
+                        </div>
                     </div>
-                    ${required > 0 ? renderCircles(required, completed) : ''}
-                    <div class="training-actions">
-                        <button class="consume-btn" 
-                            data-category="${category}" 
-                            data-index="${index}" 
-                            data-count="1"
-                            ${isMet ? 'disabled' : ''}>
-                            核销一次
-                        </button>
-                        <button class="consume-btn" 
-                            data-category="${category}" 
-                            data-index="${index}" 
-                            data-count="3"
-                            ${isMet || remaining < 3 ? 'disabled' : ''}>
-                            核销三次
-                        </button>
-                        <button class="consume-btn" 
-                            data-category="${category}" 
-                            data-index="${index}" 
-                            data-count="6"
-                            ${isMet || remaining < 6 ? 'disabled' : ''}>
-                            核销六次
-                        </button>
-                        <button class="consume-btn custom-consume" 
-                            data-category="${category}" 
-                            data-index="${index}">
-                            核销指定次数
-                        </button>
-                        <input type="number" min="1" max="${remaining}" 
-                            class="custom-consume-input" 
-                            data-category="${category}" 
-                            data-index="${index}"
-                            placeholder="次数">
-                        <button class="undo-btn" 
-                            data-category="${category}" 
-                            data-index="${index}"
-                            ${completed <= 0 ? 'disabled' : ''}>
-                            撤销
-                        </button>
-                    </div>
-                </div>
-            `;
-        }).join('')}
-    `;
-};
-    // 渲染圆圈进度 (自适应宽度布局)
+                `;
+            }).join('')}
+        `;
+    };
+
+    // 渲染圆圈进度
     const renderCircles = (required, completed) => {
         if (required <= 0) return '';
         
@@ -613,55 +616,32 @@ const renderTrainingCategory = (category, container) => {
 
     // ==================== 操作处理 ====================
 
-   // 处理核销操作
-const handleConsume = (category, index, count) => {
-    const trainingItem = state.training[category][index] || { completed: 0 };
-    const required = trainingItem.required || 0;
-    const completed = trainingItem.completed || 0;
-    const remaining = required - completed;
-    
-    if (isNaN(count) || count <= 0) {
-        alert('核销次数必须大于0');
-        return;
-    }
-    
-    if (count > remaining) {
-        alert(`核销次数不能超过剩余次数（${remaining}）`);
-        return;
-    }
-    
-    const actualCount = Math.min(count, remaining);
-    if (actualCount <= 0) return;
-    
-    // 更新状态前先保存旧的完成状态
-    const oldCompletions = {};
-    [13, 15, 17].forEach(tier => {
-        oldCompletions[tier] = checkTrainingCompletion(category, tier);
-    });
-
-    // 记录操作历史
-    state.trainingHistory.push({
-        category,
-        index,
-        previousCount: completed,
-        count: actualCount,
-        timestamp: new Date().toISOString()
-    });
-    
-    // 更新状态
-    state.training[category][index].completed = completed + actualCount;
-
-    // 检查是否有新的修为完成
-    [13, 15, 17].forEach(tier => {
-        const nowCompleted = checkTrainingCompletion(category, tier);
-        if (nowCompleted && !oldCompletions[tier]) {
-            state.trainingCompletions[category][tier] = 
-                (state.trainingCompletions[category][tier] || 0) + 1;
+    // 处理核销操作
+    const handleConsume = (category, index, count) => {
+        const trainingItem = state.training[category][index] || { completed: 0 };
+        const required = trainingItem.required || 0;
+        const completed = trainingItem.completed || 0;
+        const remaining = required - completed;
+        
+        if (isNaN(count) || count <= 0) {
+            alert('核销次数必须大于0');
+            return;
         }
-    });
+        
+        if (count > remaining) {
+            alert(`核销次数不能超过剩余次数（${remaining}）`);
+            return;
+        }
+        
+        const actualCount = Math.min(count, remaining);
+        if (actualCount <= 0) return;
+        
+        // 更新状态前先保存旧的完成状态
+        const oldCompletions = {};
+        [13, 15, 17].forEach(tier => {
+            oldCompletions[tier] = checkTrainingCompletion(category, tier);
+        });
 
-    updateAndSave();
-};
         // 记录操作历史
         state.trainingHistory.push({
             category,
@@ -673,6 +653,16 @@ const handleConsume = (category, index, count) => {
         
         // 更新状态
         state.training[category][index].completed = completed + actualCount;
+
+        // 检查是否有新的修为完成
+        [13, 15, 17].forEach(tier => {
+            const nowCompleted = checkTrainingCompletion(category, tier);
+            if (nowCompleted && !oldCompletions[tier]) {
+                state.trainingCompletions[category][tier] = 
+                    (state.trainingCompletions[category][tier] || 0) + 1;
+            }
+        });
+
         updateAndSave();
     };
     
@@ -696,181 +686,191 @@ const handleConsume = (category, index, count) => {
         }
     };
 
-    /**
-     * 处理修为切换
-     */
-const handleTierChange = (category, tier) => {
-    const floors = [4, 6, 8, 10, 12];
-    
-    state.training[category] = state.training[category].map((item, index) => {
-        const floor = floors[index];
-        const newRequired = GAME_DATA.trainingPresets[tier][floor];
+    // 处理修为切换
+    const handleTierChange = (category, tier) => {
+        const floors = [4, 6, 8, 10, 12];
         
-        return {
-            ...item,
-            required: newRequired,
-            tier: tier,
-            userModified: false
-        };
-    });
+        state.training[category] = state.training[category].map((item, index) => {
+            const floor = floors[index];
+            const newRequired = GAME_DATA.trainingPresets[tier][floor];
+            
+            return {
+                ...item,
+                required: newRequired,
+                tier: tier,
+                userModified: false
+            };
+        });
 
-    // 强制重新渲染历练部分
-    renderTraining();
-    saveData();
-};
-    /**
-     * 一键撤销分类
-     */
+        // 强制重新渲染历练部分
+        renderTraining();
+        saveData();
+    };
+
+    // 一键撤销分类
     const handleResetCategory = (category) => {
-    // 添加数据校验
-    if (!category || !state.training || !state.training[category]) {
-        console.error('无效的历练类别:', category);
-        return;
-    }
-
-    if (confirm(`确定要重置【${getCategoryName(category)}】的所有进度吗？`)) {
-        // 安全遍历
-        if (Array.isArray(state.training[category])) {
-            state.training[category].forEach(item => {
-                item.completed = 0;
-            });
-            
-            // 清除相关历史记录
-            state.trainingHistory = state.trainingHistory.filter(
-                record => record.category !== category
-            );
-            
-            updateAndSave();
-        }
-    }
-};
-
-// 添加辅助函数
-const getCategoryName = (category) => {
-    const names = {
-        yinYang: '阴阳历练',
-        windFire: '风火历练', 
-        earthWater: '地水历练'
-    };
-    return names[category] || category;
-};
-    // ==================== 事件处理 ====================
-const setupEventListeners = () => {
-    // 1. 通用change事件监听（修为切换+目标选择+材料勾选）
-    document.addEventListener('change', (e) => {
-        // 添加修为切换监听
-        if (e.target.classList.contains('tier-select')) {
-            const category = e.target.dataset.category;
-            const tier = parseInt(e.target.value);
-            handleTierChange(category, tier);
+        if (!category || !state.training || !state.training[category]) {
+            console.error('无效的历练类别:', category);
             return;
         }
 
-        // 目标密探选择监听
-        if (e.target.matches('.target-section input[type="checkbox"]')) {
-            const checkbox = e.target;
-            const type = checkbox.dataset.type;
-            const value = checkbox.dataset.value;
-            
-            if (type === 'class') {
-                state.targetSelection.classes[value] = checkbox.checked;
-            } else if (type === 'attribute') {
-                state.targetSelection.attributes[value] = checkbox.checked;
-            }
-            updateAndSave();
-            return;
-        }
-
-        // 材料勾选监听
-        if (e.target.matches('#materials-list input[type="checkbox"]')) {
-            const materialId = e.target.id.replace('-check', '');
-            state.materials[materialId] = e.target.checked;
-            updateAndSave();
-        }
-    });
-
-    // 2. 输入框监听（兵书数量+历练次数）
-    const handleInputChange = (e) => {
-        // 兵书数量输入
-        if (e.target === dom.fragments || e.target === dom.scrolls) {
-            state[e.target.id === 'bingshu_canjuan' ? 'fragments' : 'scrolls'] = 
-                parseInt(e.target.value) || 0;
-            updateAndSave();
-            return;
-        }
-
-        // 历练次数输入
-        if (e.target.classList.contains('training-count-input')) {
-            const input = e.target;
-            const category = input.dataset.category;
-            const index = parseInt(input.dataset.index);
-            
-            input.value = input.value.replace(/[^0-9]/g, '');
-            const newValue = parseInt(input.value) || 0;
-            
-            state.training[category][index].required = newValue;
-            state.training[category][index].userModified = true;
-            
-            clearTimeout(input.saveTimeout);
-            input.saveTimeout = setTimeout(() => updateAndSave(), 500);
-        }
-    };
-    document.addEventListener('input', handleInputChange);
-
-    // 3. 按钮点击监听（核销+撤销+重置）
-    document.addEventListener('click', (e) => {
-        // 核销按钮（含自定义次数）
-        if (e.target.classList.contains('consume-btn')) {
-            const btn = e.target;
-            let count;
-            
-            if (btn.classList.contains('custom-consume')) {
-                const input = btn.nextElementSibling;
-                if (!input?.classList.contains('custom-consume-input')) return;
-                count = parseInt(input.value) || 0;
-            } else {
-                count = parseInt(btn.dataset.count) || 1;
-            }
-            
-            if (count > 0) {
-                handleConsume(
-                    btn.dataset.category,
-                    parseInt(btn.dataset.index),
-                    count
+        if (confirm(`确定要重置【${getCategoryName(category)}】的所有进度吗？`)) {
+            if (Array.isArray(state.training[category])) {
+                state.training[category].forEach(item => {
+                    item.completed = 0;
+                });
+                
+                // 清除相关历史记录
+                state.trainingHistory = state.trainingHistory.filter(
+                    record => record.category !== category
                 );
+                
+                updateAndSave();
             }
-            e.stopPropagation();
-            return;
         }
+    };
 
-        // 撤销按钮
-        if (e.target.classList.contains('undo-btn')) {
-            const btn = e.target;
-            handleUndo(btn.dataset.category, parseInt(btn.dataset.index));
-            e.stopPropagation();
-            return;
-        }
+    // 获取分类名称
+    const getCategoryName = (category) => {
+        const names = {
+            yinYang: '阴阳历练',
+            windFire: '风火历练', 
+            earthWater: '地水历练'
+        };
+        return names[category] || category;
+    };
 
-        // 一键撤销分类
-        if (e.target.classList.contains('reset-category-btn')) {
-            handleResetCategory(e.target.dataset.category);
-            return;
-        }
-    });
+    // ==================== 事件处理 ====================
+    const setupEventListeners = () => {
+        // 1. 通用change事件监听
+        document.addEventListener('change', (e) => {
+            // 修为切换监听
+            if (e.target.classList.contains('tier-select')) {
+                const category = e.target.dataset.category;
+                const tier = parseInt(e.target.value);
+                handleTierChange(category, tier);
+                return;
+            }
 
-    // 4. 独立监听的元素
-    dom.moneyCheck.addEventListener('change', () => {
-        state.moneyChecked = dom.moneyCheck.checked;
-        updateAndSave();
-    });
+            // 目标密探选择监听
+            if (e.target.matches('.target-section input[type="checkbox"]')) {
+                const checkbox = e.target;
+                const type = checkbox.dataset.type;
+                const value = checkbox.dataset.value;
+                
+                if (type === 'class') {
+                    state.targetSelection.classes[value] = checkbox.checked;
+                } else if (type === 'attribute') {
+                    state.targetSelection.attributes[value] = checkbox.checked;
+                }
+                updateAndSave();
+                return;
+            }
 
-    dom.resetButton.addEventListener('click', () => {
-        if (confirm('确定要清空所有记录吗？')) {
-            state = resetState();
+            // 材料勾选监听
+            if (e.target.matches('#materials-list input[type="checkbox"]')) {
+                const materialId = e.target.id.replace('-check', '');
+                state.materials[materialId] = e.target.checked;
+                updateAndSave();
+            }
+        });
+
+        // 2. 输入框监听
+        const handleInputChange = (e) => {
+            // 兵书数量输入
+            if (e.target === dom.fragments || e.target === dom.scrolls) {
+                state[e.target.id === 'bingshu_canjuan' ? 'fragments' : 'scrolls'] = 
+                    parseInt(e.target.value) || 0;
+                updateAndSave();
+                return;
+            }
+
+            // 历练次数输入
+            if (e.target.classList.contains('training-count-input')) {
+                const input = e.target;
+                const category = input.dataset.category;
+                const index = parseInt(input.dataset.index);
+                
+                input.value = input.value.replace(/[^0-9]/g, '');
+                const newValue = parseInt(input.value) || 0;
+                
+                state.training[category][index].required = newValue;
+                state.training[category][index].userModified = true;
+                
+                clearTimeout(input.saveTimeout);
+                input.saveTimeout = setTimeout(() => updateAndSave(), 500);
+            }
+        };
+        document.addEventListener('input', handleInputChange);
+
+        // 3. 按钮点击监听
+        document.addEventListener('click', (e) => {
+            // 核销按钮
+            if (e.target.classList.contains('consume-btn')) {
+                const btn = e.target;
+                let count;
+                
+                if (btn.classList.contains('custom-consume')) {
+                    const input = btn.nextElementSibling;
+                    if (!input?.classList.contains('custom-consume-input')) return;
+                    count = parseInt(input.value) || 0;
+                } else {
+                    count = parseInt(btn.dataset.count) || 1;
+                }
+                
+                if (count > 0) {
+                    handleConsume(
+                        btn.dataset.category,
+                        parseInt(btn.dataset.index),
+                        count
+                    );
+                }
+                e.stopPropagation();
+                return;
+            }
+
+            // 撤销按钮
+            if (e.target.classList.contains('undo-btn')) {
+                const btn = e.target;
+                handleUndo(btn.dataset.category, parseInt(btn.dataset.index));
+                e.stopPropagation();
+                return;
+            }
+
+            // 一键撤销分类
+            if (e.target.classList.contains('reset-category-btn')) {
+                handleResetCategory(e.target.dataset.category);
+                return;
+            }
+        });
+
+        // 4. 独立监听的元素
+        dom.moneyCheck.addEventListener('change', () => {
+            state.moneyChecked = dom.moneyCheck.checked;
             updateAndSave();
-        }
-    });
-};
+        });
+
+        dom.resetButton.addEventListener('click', () => {
+            if (confirm('确定要清空所有记录吗？')) {
+                state = resetState();
+                updateAndSave();
+            }
+        });
+
+        // 5. 键盘快捷键支持
+        document.addEventListener('keydown', (e) => {
+            if (e.target.tagName === 'INPUT') return;
+            
+            if (e.key === '1') {
+                document.querySelector('.consume-btn[data-count="1"]')?.click();
+            } else if (e.key === '3') {
+                document.querySelector('.consume-btn[data-count="3"]')?.click();
+            } else if (e.key === '6') {
+                document.querySelector('.consume-btn[data-count="6"]')?.click();
+            }
+        });
+    };
+
     // ==================== 工具函数 ====================
 
     // 更新并保存数据
@@ -879,6 +879,7 @@ const setupEventListeners = () => {
         saveData();
         renderAll();
     };
+
     // 保存数据到本地存储
     const saveData = () => {
         try {
@@ -902,7 +903,7 @@ const setupEventListeners = () => {
                 completed: 0,
                 required: item.required,
                 userModified: false,
-                tier: 17 // 默认17修为
+                tier: 17
             }));
 
         return {
@@ -911,10 +912,10 @@ const setupEventListeners = () => {
             scrolls: 0,
             materials,
             trainingCompletions: {
-            yinYang: {13: 0, 15: 0, 17: 0},
-            windFire: {13: 0, 15: 0, 17: 0},
-            earthWater: {13: 0, 15: 0, 17: 0}
-        },
+                yinYang: {13: 0, 15: 0, 17: 0},
+                windFire: {13: 0, 15: 0, 17: 0},
+                earthWater: {13: 0, 15: 0, 17: 0}
+            },
             training: {
                 yinYang: initTraining('yinYang'),
                 windFire: initTraining('windFire'),
