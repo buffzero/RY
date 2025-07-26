@@ -130,38 +130,36 @@ const ResourceTracker = (() => {
     };
 
     // ==================== 状态管理 ====================
-    let state = {
-        // 基础状态
+const resetState = () => {
+    // 初始化材料状态
+    const materials = {};
+    GAME_DATA.materials.forEach(material => {
+        materials[material.id] = false;
+    });
+    
+    // 初始化历练状态
+    const initTraining = (category) => 
+        GAME_DATA.training[category].map(item => ({
+            completed: 0,
+            required: item.required,
+            userModified: false,
+            tier: 17
+        }));
+
+    return {
         moneyChecked: false,
         fragments: 0,
         scrolls: 0,
-        // 材料收集状态
-        materials: {},
-         trainingCompletions: { // 修改为更清晰的结构
+        materials,
+        trainingCompletions: {
             yinYang: {13: 0, 15: 0, 17: 0},
             windFire: {13: 0, 15: 0, 17: 0},
             earthWater: {13: 0, 15: 0, 17: 0}
         },
-        // 历练进度
         training: {
-            yinYang: GAME_DATA.training.yinYang.map(item => ({
-                completed: 0,
-                required: item.required,
-                userModified: false,
-                tier: 17 // 默认17修为
-            })),
-            windFire: GAME_DATA.training.windFire.map(item => ({
-                completed: 0,
-                required: item.required,
-                userModified: false,
-                tier: 17 // 默认17修为
-            })),
-            earthWater: GAME_DATA.training.earthWater.map(item => ({
-                completed: 0,
-                required: item.required,
-                userModified: false,
-                tier: 17 // 默认17修为
-            }))
+            yinYang: initTraining('yinYang'),
+            windFire: initTraining('windFire'),
+            earthWater: initTraining('earthWater')
         },
         targetSelection: {
             classes: {
@@ -180,11 +178,13 @@ const ResourceTracker = (() => {
                 shui: false
             }
         },
-        trainingHistory: [], // 核销操作历史记录
-        lastUpdated: null
+        trainingHistory: [],
+        lastUpdated: new Date().toISOString()
     };
-    const dom = {}; // 缓存DOM元素
+};
 
+let state = resetState(); // 使用函数初始化状态
+const dom = {}; // 缓存DOM元素
     // ==================== 核心函数 ====================
 
     /**
