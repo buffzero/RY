@@ -253,14 +253,14 @@ const ResourceTracker = (() => {
         }));
     };
       // 新增的检查历练完成方法
-    const checkTrainingCompletion = (category, tier) => {
-        const floors = [4, 6, 8, 10, 12];
-        return state.training[category].every((item, index) => {
-            const floor = floors[index];
-            const required = GAME_DATA.trainingPresets[tier][floor];
-            return item.completed >= required;
-        });
-    };
+   const checkTrainingCompletion = (category, tier) => {
+    const floors = [4, 6, 8, 10, 12];
+    return state.training[category].every((item, index) => {
+        const floor = floors[index];
+        const required = GAME_DATA.trainingPresets[tier][floor];
+        return item.completed >= required;
+    });
+};
 // ==================== setupDOM 函数 ====================
 const setupDOM = () => {
   try {
@@ -458,14 +458,20 @@ const renderTrainingCategory = (category, container) => {
     
     // 创建完成次数徽章
     const completionBadges = [13, 15, 17].map(tier => {
-        const count = state.trainingCompletions[category][tier] || 0;
-        return count > 0 ? `
+    const count = state.trainingCompletions[category][tier] || 0;
+    const isComplete = checkTrainingCompletion(category, tier);
+    
+    // 只有当前完成或历史有完成记录时才显示
+    if (count > 0 || isComplete) {
+        return `
             <span class="completion-badge tier-${tier}" 
                   title="${categoryName} 修为${tier}已完成${count}次">
-                ${tier}×${count}
+                ${tier}×${isComplete ? count + 1 : count}
             </span>
-        ` : '';
-    }).join('');
+        `;
+    }
+    return '';
+}).filter(badge => badge !== '').join('');
 
     container.innerHTML = `
         <div class="training-category-title">
@@ -607,32 +613,55 @@ const renderTrainingCategory = (category, container) => {
 
     // ==================== 操作处理 ====================
 
-    // 处理核销操作
-    const handleConsume = (category, index, count) => {
-        const trainingItem = state.training[category][index] || { completed: 0 };
-        const required = trainingItem.required || 0;
-        const completed = trainingItem.completed || 0;
-        const remaining = required - completed;
-        
-        if (isNaN(count) || count <= 0) {
-            alert('核销次数必须大于0');
-            return;
-        }
-        
-        if (count > remaining) {
-            alert(`核销次数不能超过剩余次数（${remaining}）`);
-            return;
-        }
-        
-        const actualCount = Math.min(count, remaining);
-        if (actualCount <= 0) return;
-        // 检查是否完成
+   // 处理核销操作
+const handleConsume = (category, index, count) => {
+    const trainingItem = state.training[category][index] || { completed: 0 };
+    const required = trainingItem.required || 0;
+    const completed = trainingItem.completed || 0;
+    const remaining = required - completed;
+    
+    if (isNaN(count) || count <= 0) {
+        alert('核销次数必须大于0');
+        return;
+    }
+    
+    if (count > remaining) {
+        alert(`核销次数不能超过剩余次数（${remaining}）`);
+        return;
+    }
+    
+    const actualCount = Math.min(count, remaining);
+    if (actualCount <= 0) return;
+    
+    // 更新状态前先保存旧的完成状态
+    const oldCompletions = {};
     [13, 15, 17].forEach(tier => {
-        if (checkTrainingCompletion(category, tier)) {
-            state.trainingCompletions[category][tier]++;
-            updateAndSave();
+        oldCompletions[tier] = checkTrainingCompletion(category, tier);
+    });
+
+    // 记录操作历史
+    state.trainingHistory.push({
+        category,
+        index,
+        previousCount: completed,
+        count: actualCount,
+        timestamp: new Date().toISOString()
+    });
+    
+    // 更新状态
+    state.training[category][index].completed = completed + actualCount;
+
+    // 检查是否有新的修为完成
+    [13, 15, 17].forEach(tier => {
+        const nowCompleted = checkTrainingCompletion(category, tier);
+        if (nowCompleted && !oldCompletions[tier]) {
+            state.trainingCompletions[category][tier] = 
+                (state.trainingCompletions[category][tier] || 0) + 1;
         }
     });
+
+    updateAndSave();
+};
         // 记录操作历史
         state.trainingHistory.push({
             category,
