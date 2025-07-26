@@ -173,22 +173,14 @@
         </div>
     </div>
 </div>
+ <!-- 页脚控制按钮 - 修正位置 -->
+        <div class="footer-controls">
+            <button id="resetButton" class="btn-reset">重置所有数据</button>
+            <span id="lastUpdated"></span>
+        </div>
+    </div>
 
-<script src="script.js" defer onerror="alert('脚本加载失败！请检查路径或网络')"></script>
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    if (typeof ResourceTracker === 'undefined') {
-      console.error('ResourceTracker 未定义！');
-      return; // 阻止后续刷新
-    }
-    ResourceTracker.init();
-  });
-</script>
-   <!-- 放在这里 ↓↓↓ -->
-<div class="footer-controls">
-    <button id="resetButton" class="btn-reset">重置所有数据</button>
-    <span id="lastUpdated"></span>
-  </div>
-</div>
+    <!-- 脚本加载 - 简化版本 -->
+    <script src="script.js"></script>
 </body>
-</html>       
+</html>
