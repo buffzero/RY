@@ -230,14 +230,14 @@ const setupDOM = () => {
     throw e; // 阻止后续执行
   }
 };
-      // 合并状态
-    // 修改为（兼容性写法）
-state = Object.assign({}, resetState(), parsed, {
-  materials: materials,
+// 修改为完整的合并逻辑
+state = {
+  ...resetState(),
+  ...parsed,
+  materials: { ...resetState().materials, ...(parsed.materials || {}) },
   targetSelection: parsed.targetSelection || resetState().targetSelection,
   trainingHistory: parsed.trainingHistory || []
-});
-
+};
       // 确保历练状态正确加载
       ['yinYang', 'windFire', 'earthWater'].forEach(category => {
         if (parsed.training?.[category]) {
@@ -401,19 +401,20 @@ state = Object.assign({}, resetState(), parsed, {
     console.groupEnd();
 
     // 3. 渲染逻辑（保持不变）
-    container.innerHTML = `
-        <div class="training-category-title">
-            ${category === 'yinYang' ? '阴阳历练' : ...}
-            <select class="tier-select" data-category="${category}">
-                ${[13, 15, 17].map(tier => `
-                    <option value="${tier}" 
-                        ${currentTier === tier ? 'selected' : ''}>
-                        修为${tier}
-                    </option>
-                `).join('')}
-            </select>
-            <button class="reset-category-btn">一键撤销</button>
-        </div>
+container.innerHTML = `
+    <div class="training-category-title">
+        ${category === 'yinYang' ? '阴阳历练' : 
+          category === 'windFire' ? '风火历练' : '地水历练'}
+        <select class="tier-select" data-category="${category}">
+            ${[13, 15, 17].map(tier => `
+                <option value="${tier}" 
+                    ${currentTier === tier ? 'selected' : ''}>
+                    修为${tier}
+                </option>
+            `).join('')}
+        </select>
+        <button class="reset-category-btn">一键撤销</button>
+    </div>
             ${GAME_DATA.training[category].map((item, index) => {
                 const trainingItem = state.training[category][index] || { completed: 0 };
                 
