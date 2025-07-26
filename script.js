@@ -294,33 +294,6 @@ const setupDOM = () => {
     throw e; // 阻止后续执行
   }
 };
-// 修改为完整的合并逻辑
-state = {
-  ...resetState(),
-  ...parsed,
-  materials: { ...resetState().materials, ...(parsed.materials || {}) },
-  targetSelection: parsed.targetSelection || resetState().targetSelection,
-  trainingHistory: parsed.trainingHistory || []
-};
-      // 确保历练状态正确加载
-      ['yinYang', 'windFire', 'earthWater'].forEach(category => {
-        if (parsed.training?.[category]) {
-          state.training[category] = parsed.training[category].map((item, i) => ({
-            completed: item.completed || 0,
-            required: item.required >= 0 ? item.required : GAME_DATA.training[category][i].required,
-            userModified: item.userModified || false,
-            tier: item.tier || 17 // 默认17修为
-          }));
-        }
-      });
-    }
-    updateLastUpdated();
-  } catch (e) {
-    console.error('数据加载失败:', e);
-    state = resetState();
-  }
-};
-
     // ==================== 渲染函数 ====================
 
     // 渲染整个界面
@@ -690,155 +663,122 @@ container.innerHTML = `
     };
 
     // ==================== 事件处理 ====================
+const setupEventListeners = () => {
+    // 1. 通用change事件监听（修为切换+目标选择+材料勾选）
+    document.addEventListener('change', (e) => {
+        // 修为切换监听
+        if (e.target.classList.contains('tier-select')) {
+            const category = e.target.dataset.category;
+            const tier = parseInt(e.target.value);
+            handleTierChange(category, tier);
+            return;
+        }
 
-    // 设置事件监听器
-  const setupEventListeners = () => {
-  document.addEventListener('change', (e) => {
-    if (e.target.classList.contains('tier-select')) {
-      const category = e.target.dataset.category;
-      const tier = parseInt(e.target.value);
-      handleTierChange(category, tier);
-    }
-                // 找到对应的输入框
-                const input = btn.nextElementSibling;
-                if (!input || !input.classList.contains('custom-consume-input')) {
-                    console.error('找不到自定义核销输入框');
-                    return;
-                }
-                
-                // 获取输入值
-                const count = parseInt(input.value);
-                if (isNaN(count) || count <= 0) {
-                    alert('请输入有效的核销次数');
-                    return;
-                }
-                
-                // 处理核销
-                handleConsume(category, index, count);
-                e.stopPropagation();
+        // 目标密探选择监听
+        if (e.target.matches('.target-section input[type="checkbox"]')) {
+            const checkbox = e.target;
+            const type = checkbox.dataset.type;
+            const value = checkbox.dataset.value;
+            
+            if (type === 'class') {
+                state.targetSelection.classes[value] = checkbox.checked;
+            } else if (type === 'attribute') {
+                state.targetSelection.attributes[value] = checkbox.checked;
             }
-
-            // 修为切换监听
-            if (e.target.classList.contains('tier-select')) {
-                const category = e.target.dataset.category;
-                const tier = parseInt(e.target.value);
-                handleTierChange(category, tier);
-            }
-
-            // 一键撤销监听
-            if (e.target.classList.contains('reset-category-btn')) {
-                const category = e.target.dataset.category;
-                handleResetCategory(category);
-            }
-        });
-
-        // 确保自定义输入框不触发其他事件
-        document.addEventListener('click', (e) => {
-            if (e.target.classList.contains('custom-consume-input')) {
-                e.stopPropagation();
-            }
-        });
-
-        // 目标选择变化监听
-        document.addEventListener('change', (e) => {
-            if (e.target.matches('.target-section input[type="checkbox"]')) {
-                const checkbox = e.target;
-                const type = checkbox.dataset.type;
-                const value = checkbox.dataset.value;
-                
-                if (type === 'class') {
-                    state.targetSelection.classes[value] = checkbox.checked;
-                } else if (type === 'attribute') {
-                    state.targetSelection.attributes[value] = checkbox.checked;
-                }
-                
-                updateAndSave();
-            }
-        });
-
-        // 金钱复选框
-        dom.moneyCheck.addEventListener('change', () => {
-            state.moneyChecked = dom.moneyCheck.checked;
             updateAndSave();
-        });
-        
+            return;
+        }
+
+        // 材料勾选监听
+        if (e.target.matches('#materials-list input[type="checkbox"]')) {
+            const materialId = e.target.id.replace('-check', '');
+            state.materials[materialId] = e.target.checked;
+            updateAndSave();
+        }
+    });
+
+    // 2. 输入框监听（兵书数量+历练次数）
+    const handleInputChange = (e) => {
         // 兵书数量输入
-        dom.fragments.addEventListener('input', () => {
-            state.fragments = parseInt(dom.fragments.value) || 0;
+        if (e.target === dom.fragments || e.target === dom.scrolls) {
+            state[e.target.id === 'bingshu_canjuan' ? 'fragments' : 'scrolls'] = 
+                parseInt(e.target.value) || 0;
             updateAndSave();
-        });
-        
-        dom.scrolls.addEventListener('input', () => {
-            state.scrolls = parseInt(dom.scrolls.value) || 0;
-            updateAndSave();
-        });
-        
-        // 材料复选框
-        dom.materialsList.addEventListener('change', (e) => {
-            if (e.target.type === 'checkbox') {
-                const materialId = e.target.id.replace('-check', '');
-                state.materials[materialId] = e.target.checked;
-                updateAndSave();
-            }
-        });
+            return;
+        }
 
-        // 历练次数
-        document.addEventListener('input', (e) => {
-            if (e.target.classList.contains('training-count-input')) {
-                const input = e.target;
-                const category = input.dataset.category;
-                const index = parseInt(input.dataset.index);
-                
-                // 过滤非数字字符
-                input.value = input.value.replace(/[^0-9]/g, '');
-                
-                // 更新状态（允许0值）
-                const newValue = parseInt(input.value) || 0;
-                state.training[category][index].required = newValue;
-                state.training[category][index].userModified = true;
-                
-                // 即时渲染
-                renderTrainingCategory(category, document.getElementById(`${category}Training`));
-                
-                // 延迟保存
-                clearTimeout(input.saveTimeout);
-                input.saveTimeout = setTimeout(() => {
-                    updateAndSave();
-                }, 500);
-            }
-        });
+        // 历练次数输入
+        if (e.target.classList.contains('training-count-input')) {
+            const input = e.target;
+            const category = input.dataset.category;
+            const index = parseInt(input.dataset.index);
+            
+            input.value = input.value.replace(/[^0-9]/g, '');
+            const newValue = parseInt(input.value) || 0;
+            
+            state.training[category][index].required = newValue;
+            state.training[category][index].userModified = true;
+            
+            clearTimeout(input.saveTimeout);
+            input.saveTimeout = setTimeout(() => updateAndSave(), 500);
+        }
+    };
+    document.addEventListener('input', handleInputChange);
 
-        // 核销按钮
-        document.addEventListener('click', (e) => {
-            if (e.target.classList.contains('consume-btn')) {
-                const btn = e.target;
+    // 3. 按钮点击监听（核销+撤销+重置）
+    document.addEventListener('click', (e) => {
+        // 核销按钮（含自定义次数）
+        if (e.target.classList.contains('consume-btn')) {
+            const btn = e.target;
+            let count;
+            
+            if (btn.classList.contains('custom-consume')) {
+                const input = btn.nextElementSibling;
+                if (!input?.classList.contains('custom-consume-input')) return;
+                count = parseInt(input.value) || 0;
+            } else {
+                count = parseInt(btn.dataset.count) || 1;
+            }
+            
+            if (count > 0) {
                 handleConsume(
                     btn.dataset.category,
                     parseInt(btn.dataset.index),
-                    parseInt(btn.dataset.count) || 1
+                    count
                 );
-                e.stopPropagation();
             }
-            
-            // 撤销按钮
-            if (e.target.classList.contains('undo-btn')) {
-                const btn = e.target;
-                const category = btn.dataset.category;
-                const index = parseInt(btn.dataset.index);
-                handleUndo(category, index);
-                e.stopPropagation();
-            }
-        });
+            e.stopPropagation();
+            return;
+        }
 
-        // 重置按钮
-        dom.resetButton.addEventListener('click', () => {
-            if (confirm('确定要清空所有记录吗？')) {
-                state = resetState();
-                updateAndSave();
-            }
-        });
-    };
+        // 撤销按钮
+        if (e.target.classList.contains('undo-btn')) {
+            const btn = e.target;
+            handleUndo(btn.dataset.category, parseInt(btn.dataset.index));
+            e.stopPropagation();
+            return;
+        }
 
+        // 一键撤销分类
+        if (e.target.classList.contains('reset-category-btn')) {
+            handleResetCategory(e.target.dataset.category);
+            return;
+        }
+    });
+
+    // 4. 独立监听的元素
+    dom.moneyCheck.addEventListener('change', () => {
+        state.moneyChecked = dom.moneyCheck.checked;
+        updateAndSave();
+    });
+
+    dom.resetButton.addEventListener('click', () => {
+        if (confirm('确定要清空所有记录吗？')) {
+            state = resetState();
+            updateAndSave();
+        }
+    });
+};
     // ==================== 工具函数 ====================
 
     // 更新并保存数据
