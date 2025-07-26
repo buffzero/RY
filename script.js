@@ -636,11 +636,10 @@ container.innerHTML = `
     
     state.training[category].forEach((item, index) => {
         const floor = floors[index];
-        if (!item.userModified) {
-            // 从预设中读取对应层级的次数
-            item.required = GAME_DATA.trainingPresets[tier][floor];
-        }
+        // 无论是否userModified都更新required值
+        item.required = GAME_DATA.trainingPresets[tier][floor];
         item.tier = tier; // 强制更新修为等级
+        item.userModified = false; // 重置用户修改标记
     });
 
     updateAndSave(); // 触发界面重新渲染
