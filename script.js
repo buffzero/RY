@@ -138,6 +138,11 @@ const ResourceTracker = (() => {
         scrolls: 0,
         // 材料收集状态
         materials: {},
+        trainingCompletions: {
+        yinYang: {13: 0, 15: 0, 17: 0},
+        windFire: {13: 0, 15: 0, 17: 0},
+        earthWater: {13: 0, 15: 0, 17: 0}
+    },
         // 历练进度
         training: {
             yinYang: GAME_DATA.training.yinYang.map(item => ({
@@ -247,7 +252,15 @@ const ResourceTracker = (() => {
             tier: item.tier || 17
         }));
     };
-
+      // 新增的检查历练完成方法
+    const checkTrainingCompletion = (category, tier) => {
+        const floors = [4, 6, 8, 10, 12];
+        return state.training[category].every((item, index) => {
+            const floor = floors[index];
+            const required = GAME_DATA.trainingPresets[tier][floor];
+            return item.completed >= required;
+        });
+    };
 // ==================== setupDOM 函数 ====================
 const setupDOM = () => {
   try {
@@ -421,46 +434,54 @@ const setupDOM = () => {
         }).join('');
     };
 
-    // 渲染所有历练类别
-    const renderTraining = () => {
-        renderTrainingCategory('yinYang', dom.yinYangTraining);
-        renderTrainingCategory('windFire', dom.windFireTraining);
-        renderTrainingCategory('earthWater', dom.earthWaterTraining);
-        renderAttributeStatus();
-    };
+    // 渲染所有历练类别（保持不变）
+const renderTraining = () => {
+    renderTrainingCategory('yinYang', dom.yinYangTraining);
+    renderTrainingCategory('windFire', dom.windFireTraining);
+    renderTrainingCategory('earthWater', dom.earthWaterTraining);
+    renderAttributeStatus(); // 保持属性状态渲染
+};
 
-    // 渲染单个历练类别
-   const renderTrainingCategory = (category, container) => {
-    const floors = [4, 6, 8, 10, 12]; // 对应历练四/六/八/十/十二
-    // 1. 更健壮的数据检查
+// 替换为新的渲染单个历练类别函数
+const renderTrainingCategory = (category, container) => {
+    const floors = [4, 6, 8, 10, 12];
+    
+    // 健壮性检查
     if (!state.training[category]?.length) {
         console.error(`错误：${category} 的历练数据为空`);
         return;
     }
 
-    const currentTier = state.training[category][0].tier; // 不再需要默认值
+    // 获取分类名称
+    const categoryName = category === 'yinYang' ? '阴阳历练' : 
+                       category === 'windFire' ? '风火历练' : '地水历练';
     
-    // 2. 打印详细调试信息
-    console.group(`[DEBUG] 渲染 ${category} 数据`);
-    console.log('当前修为:', currentTier);
-    console.log('各层级要求次数:', 
-        state.training[category].map(item => item.required));
-    console.groupEnd();
+    // 创建完成次数徽章
+    const completionBadges = [13, 15, 17].map(tier => {
+        const count = state.trainingCompletions[category][tier] || 0;
+        return count > 0 ? `
+            <span class="completion-badge tier-${tier}" 
+                  title="${categoryName} 修为${tier}已完成${count}次">
+                ${tier}×${count}
+            </span>
+        ` : '';
+    }).join('');
 
-    // 3. 渲染逻辑（保持不变）
- container.innerHTML = `
+    container.innerHTML = `
         <div class="training-category-title">
-            ${category === 'yinYang' ? '阴阳历练' : 
-              category === 'windFire' ? '风火历练' : '地水历练'}
-            <select class="tier-select" data-category="${category}">
-                ${[13, 15, 17].map(tier => `
-                    <option value="${tier}" 
-                        ${state.training[category][0].tier === tier ? 'selected' : ''}>
-                        修为${tier}
-                    </option>
-                `).join('')}
-            </select>
-          <button class="reset-category-btn" data-category="${category}">一键撤销</button>
+            <span class="category-name">${categoryName}</span>
+            <div class="completion-badges">${completionBadges}</div>
+            <div class="training-controls">
+                <select class="tier-select" data-category="${category}">
+                    ${[13, 15, 17].map(tier => `
+                        <option value="${tier}" 
+                            ${state.training[category][0].tier === tier ? 'selected' : ''}>
+                            修为${tier}
+                        </option>
+                    `).join('')}
+                </select>
+                <button class="reset-category-btn" data-category="${category}">一键撤销</button>
+            </div>
         </div>
         ${GAME_DATA.training[category].map((item, index) => {
             const trainingItem = state.training[category][index] || { completed: 0 };
@@ -476,66 +497,65 @@ const setupDOM = () => {
             
             return `
                 <div class="training-item">
-                        <div class="training-header">
-                            <div class="training-name">${item.name}</div>
-                            <div class="training-input-status">
-                                <input type="text"
-                                    inputmode="numeric"
-                                    class="training-count-input" 
-                                    data-category="${category}" 
-                                    data-index="${index}"
-                                    value="${required}">
-                                <div class="sub-status-indicator ${isMet ? 'met' : 'not-met'}">
-                                    ${isMet ? '已满足' : `${completed}/${required}`}
-                                </div>
+                    <div class="training-header">
+                        <div class="training-name">${item.name}</div>
+                        <div class="training-input-status">
+                            <input type="text"
+                                inputmode="numeric"
+                                class="training-count-input" 
+                                data-category="${category}" 
+                                data-index="${index}"
+                                value="${required}">
+                            <div class="sub-status-indicator ${isMet ? 'met' : 'not-met'}">
+                                ${isMet ? '已满足' : `${completed}/${required}`}
                             </div>
                         </div>
-                        ${required > 0 ? renderCircles(required, completed) : ''}
-                        <div class="training-actions">
-                            <button class="consume-btn" 
-                                data-category="${category}" 
-                                data-index="${index}" 
-                                data-count="1"
-                                ${isMet ? 'disabled' : ''}>
-                                核销一次
-                            </button>
-                            <button class="consume-btn" 
-                                data-category="${category}" 
-                                data-index="${index}" 
-                                data-count="3"
-                                ${isMet || remaining < 3 ? 'disabled' : ''}>
-                                核销三次
-                            </button>
-                            <button class="consume-btn" 
-                                data-category="${category}" 
-                                data-index="${index}" 
-                                data-count="6"
-                                ${isMet || remaining < 6 ? 'disabled' : ''}>
-                                核销六次
-                            </button>
-                            <button class="consume-btn custom-consume" 
-                                data-category="${category}" 
-                                data-index="${index}">
-                                核销指定次数
-                            </button>
-                            <input type="number" min="1" max="${remaining}" 
-                                class="custom-consume-input" 
-                                data-category="${category}" 
-                                data-index="${index}"
-                                placeholder="次数">
-                            <button class="undo-btn" 
-                                data-category="${category}" 
-                                data-index="${index}"
-                                ${completed <= 0 ? 'disabled' : ''}>
-                                撤销
-                            </button>
-                        </div>
                     </div>
-                `;
-            }).join('')}
-        `;
-    };
-    
+                    ${required > 0 ? renderCircles(required, completed) : ''}
+                    <div class="training-actions">
+                        <button class="consume-btn" 
+                            data-category="${category}" 
+                            data-index="${index}" 
+                            data-count="1"
+                            ${isMet ? 'disabled' : ''}>
+                            核销一次
+                        </button>
+                        <button class="consume-btn" 
+                            data-category="${category}" 
+                            data-index="${index}" 
+                            data-count="3"
+                            ${isMet || remaining < 3 ? 'disabled' : ''}>
+                            核销三次
+                        </button>
+                        <button class="consume-btn" 
+                            data-category="${category}" 
+                            data-index="${index}" 
+                            data-count="6"
+                            ${isMet || remaining < 6 ? 'disabled' : ''}>
+                            核销六次
+                        </button>
+                        <button class="consume-btn custom-consume" 
+                            data-category="${category}" 
+                            data-index="${index}">
+                            核销指定次数
+                        </button>
+                        <input type="number" min="1" max="${remaining}" 
+                            class="custom-consume-input" 
+                            data-category="${category}" 
+                            data-index="${index}"
+                            placeholder="次数">
+                        <button class="undo-btn" 
+                            data-category="${category}" 
+                            data-index="${index}"
+                            ${completed <= 0 ? 'disabled' : ''}>
+                            撤销
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('')}
+    `;
+};
     // 渲染圆圈进度 (自适应宽度布局)
     const renderCircles = (required, completed) => {
         if (required <= 0) return '';
@@ -606,7 +626,13 @@ const setupDOM = () => {
         
         const actualCount = Math.min(count, remaining);
         if (actualCount <= 0) return;
-        
+        // 检查是否完成
+    [13, 15, 17].forEach(tier => {
+        if (checkTrainingCompletion(category, tier)) {
+            state.trainingCompletions[category][tier]++;
+            updateAndSave();
+        }
+    });
         // 记录操作历史
         state.trainingHistory.push({
             category,
@@ -855,6 +881,11 @@ const setupEventListeners = () => {
             fragments: 0,
             scrolls: 0,
             materials,
+            trainingCompletions: {
+            yinYang: {13: 0, 15: 0, 17: 0},
+            windFire: {13: 0, 15: 0, 17: 0},
+            earthWater: {13: 0, 15: 0, 17: 0}
+        },
             training: {
                 yinYang: initTraining('yinYang'),
                 windFire: initTraining('windFire'),
