@@ -107,18 +107,7 @@ const ResourceTracker = (() => {
             17: { 4: 6, 6: 12, 8: 24, 10: 35, 12: 47 }
         }
     };
-       const clearTierCompletion = (category, tier) => {
-    if (state.trainingCompletions[category] && state.trainingCompletions[category][tier]) {
-        state.trainingCompletions[category][tier] = 0;
-        updateAndSave();
-    }
-};
-
-// 修改公共接口
-return { 
-    init,
-    clearTierCompletion  // 暴露新方法
-}; 
+       
     // 格式化日期显示
     const formatDate = (date) => {
         return date.toLocaleString('zh-CN', {
@@ -470,8 +459,8 @@ return {
     // 生成修为徽章（显示已完成+可完成次数）
     const completionBadges = [13, 15, 17].map(tier => {
     const completed = state.trainingCompletions[category][tier] || 0;
-    // 添加检查：如果当前选择的tier不是这个徽章的tier，则不显示可领取状态
-    const available = (trainingItem.tier === tier) 
+    const currentTier = state.training[category][0].tier; // 获取当前选择的tier
+    const available = (currentTier === tier) 
         ? checkTrainingCompletion(category, tier) - completed 
         : 0;
     
@@ -996,10 +985,19 @@ const migrateOldData = (savedData) => {
         return map[className] || '';
     };
 
-    // ==================== 公共接口 ====================
-    return { init };
-})();
+  // ==================== 操作处理 ====================
+const clearTierCompletion = (category, tier) => {
+    if (state.trainingCompletions[category] && state.trainingCompletions[category][tier]) {
+        state.trainingCompletions[category][tier] = 0;
+        updateAndSave();
+    }
+};
 
+// ==================== 公共接口 ====================
+return { 
+    init,
+    clearTierCompletion  // 暴露新方法
+};
 // ==================== 初始化 ====================
 document.addEventListener('DOMContentLoaded', () => {
     if (!('localStorage' in window)) {
