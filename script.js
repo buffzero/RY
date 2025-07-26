@@ -883,26 +883,25 @@ const ResourceTracker = (() => {
                 document.querySelector('.consume-btn[data-count="6"]')?.click();
             }
         });
-    };
-
+  
     // ==================== 工具函数 ====================
     /**
  * 兼容旧版数据迁移
  * 说明：旧版本没有trainingCompletions字段，需要初始化
  */
 const migrateOldData = (savedData) => {
-    // 如果是从旧版升级（没有trainingCompletions字段）
-    if (!savedData.trainingCompletions) {
-        console.log('检测到旧版数据，初始化修为完成记录...');
-        return {
-            yinYang: {13: 0, 15: 0, 17: 0},
-            windFire: {13: 0, 15: 0, 17: 0},
-            earthWater: {13: 0, 15: 0, 17: 0}
-        };
-    }
-    // 如果是新版数据，直接返回原有值
-    return savedData.trainingCompletions;
-};
+        // 如果是从旧版升级（没有trainingCompletions字段）
+        if (!savedData.trainingCompletions) {
+            console.log('检测到旧版数据，初始化修为完成记录...');
+            return {
+                yinYang: {13: 0, 15: 0, 17: 0},
+                windFire: {13: 0, 15: 0, 17: 0},
+                earthWater: {13: 0, 15: 0, 17: 0}
+            };
+        }
+        // 如果是新版数据，直接返回原有值
+        return savedData.trainingCompletions;
+    };
     // 更新并保存数据
     const updateAndSave = () => {
         state.lastUpdated = new Date().toISOString();
@@ -985,13 +984,13 @@ const migrateOldData = (savedData) => {
         return map[className] || '';
     };
 
-  // ==================== 操作处理 ====================
-const clearTierCompletion = (category, tier) => {
-    if (state.trainingCompletions[category] && state.trainingCompletions[category][tier]) {
-        state.trainingCompletions[category][tier] = 0;
-        updateAndSave();
-    }
-};
+// ==================== 操作处理 ====================
+    const clearTierCompletion = (category, tier) => {
+        if (state.trainingCompletions[category] && state.trainingCompletions[category][tier]) {
+            state.trainingCompletions[category][tier] = 0;
+            updateAndSave();
+        }
+    };
 
 // ==================== 公共接口 ====================
 return { 
