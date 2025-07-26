@@ -137,7 +137,7 @@ const ResourceTracker = (() => {
         scrolls: 0,
         // 材料收集状态
         materials: {},
-        trainingCompletions: {
+         trainingCompletions: { // 修改为更清晰的结构
             yinYang: {13: 0, 15: 0, 17: 0},
             windFire: {13: 0, 15: 0, 17: 0},
             earthWater: {13: 0, 15: 0, 17: 0}
@@ -210,38 +210,40 @@ const ResourceTracker = (() => {
 
     // ==================== loadData 函数 ====================
     const loadData = () => {
-        try {
-            const saved = localStorage.getItem(CONFIG.storageKey);
-            if (!saved) return;
+    try {
+        const saved = localStorage.getItem(CONFIG.storageKey);
+        if (!saved) return;
 
-            const parsed = JSON.parse(saved);
-            
-            // 合并材料状态
-            const materials = {};
-            GAME_DATA.materials.forEach(material => {
-                materials[material.id] = parsed.materials?.[material.id] || false;
-            });
+        const parsed = JSON.parse(saved);
+        
+        // 新增数据迁移处理
+        state.trainingCompletions = migrateOldData(parsed);
+        
+        // 以下是原有代码保持不变
+        const materials = {};
+        GAME_DATA.materials.forEach(material => {
+            materials[material.id] = parsed.materials?.[material.id] || false;
+        });
 
-            // 完整状态合并
-            state = {
-                ...resetState(),
-                ...parsed,
-                materials,
-                targetSelection: parsed.targetSelection || resetState().targetSelection,
-                trainingHistory: parsed.trainingHistory || [],
-                training: {
-                    yinYang: mergeTrainingData(parsed.training?.yinYang, 'yinYang'),
-                    windFire: mergeTrainingData(parsed.training?.windFire, 'windFire'),
-                    earthWater: mergeTrainingData(parsed.training?.earthWater, 'earthWater')
-                }
-            };
-            
-            updateLastUpdated();
-        } catch (e) {
-            console.error('数据加载失败:', e);
-            state = resetState();
-        }
-    };
+        state = {
+            ...resetState(),
+            ...parsed,
+            materials,
+            targetSelection: parsed.targetSelection || resetState().targetSelection,
+            trainingHistory: parsed.trainingHistory || [],
+            training: {
+                yinYang: mergeTrainingData(parsed.training?.yinYang, 'yinYang'),
+                windFire: mergeTrainingData(parsed.training?.windFire, 'windFire'),
+                earthWater: mergeTrainingData(parsed.training?.earthWater, 'earthWater')
+            }
+        };
+        
+        updateLastUpdated();
+    } catch (e) {
+        console.error('数据加载失败:', e);
+        state = resetState();
+    }
+};
 
     // 辅助函数：合并历练数据
     const mergeTrainingData = (savedData, category) => {
@@ -254,13 +256,17 @@ const ResourceTracker = (() => {
     };
 
     // 检查历练完成情况
-    const checkTrainingCompletion = (category, tier) => {
+   const checkTrainingCompletion = (category, tier) => {
         const floors = [4, 6, 8, 10, 12];
-        return state.training[category].every((item, index) => {
-            const floor = floors[index];
+        let minCompletion = Infinity;
+        
+        floors.forEach((floor, index) => {
             const required = GAME_DATA.trainingPresets[tier][floor];
-            return item.completed >= required;
+            const completed = state.training[category][index].completed;
+            minCompletion = Math.min(minCompletion, Math.floor(completed / required));
         });
+        
+        return minCompletion === Infinity ? 0 : minCompletion;
     };
 
     // ==================== setupDOM 函数 ====================
@@ -446,34 +452,28 @@ const ResourceTracker = (() => {
     };
 
     // 渲染单个历练类别
-    const renderTrainingCategory = (category, container) => {
-        const floors = [4, 6, 8, 10, 12];
+   const renderTrainingCategory = (category, container) => {
+    const floors = [4, 6, 8, 10, 12];
+    const categoryName = getCategoryName(category);
+    
+    // 生成修为徽章（显示已完成+可完成次数）
+    const completionBadges = [13, 15, 17].map(tier => {
+        const completed = state.trainingCompletions[category][tier] || 0;
+        const available = checkTrainingCompletion(category, tier) - completed;
         
-        if (!state.training[category]?.length) {
-            console.error(`错误：${category} 的历练数据为空`);
-            return;
+        if (completed > 0 || available > 0) {
+            return `
+                <span class="completion-badge tier-${tier} 
+                      ${available > 0 ? 'available' : ''}"
+                      title="${categoryName}·修为${tier}：
+                      已完成 ${completed}次
+                      ${available > 0 ? `可领取 +${available}次` : ''}">
+                    ${tier}: ${completed}${available > 0 ? `(+${available})` : ''}
+                </span>
+            `;
         }
-
-        // 获取分类名称
-        const categoryName = category === 'yinYang' ? '阴阳历练' : 
-                           category === 'windFire' ? '风火历练' : '地水历练';
-        
-        // 创建完成次数徽章
-        const completionBadges = [13, 15, 17].map(tier => {
-            const count = state.trainingCompletions[category][tier] || 0;
-            const isComplete = checkTrainingCompletion(category, tier);
-            
-            // 只有当前完成或历史有完成记录时才显示
-            if (count > 0 || isComplete) {
-                return `
-                    <span class="completion-badge tier-${tier} ${isComplete ? 'completed' : ''}" 
-                          title="${categoryName} 修为${tier}已完成${count}次">
-                        ${tier}×${isComplete ? count + 1 : count}
-                    </span>
-                `;
-            }
-            return '';
-        }).filter(badge => badge !== '').join('');
+        return '';
+    }).filter(Boolean).join('');
 
         container.innerHTML = `
             <div class="training-category-title">
@@ -619,9 +619,9 @@ const ResourceTracker = (() => {
     // 处理核销操作
     const handleConsume = (category, index, count) => {
         const trainingItem = state.training[category][index] || { completed: 0 };
-        const required = trainingItem.required || 0;
-        const completed = trainingItem.completed || 0;
-        const remaining = required - completed;
+        const required = trainingItem.userModified 
+            ? trainingItem.required 
+            : GAME_DATA.trainingPresets[trainingItem.tier][[4,6,8,10,12][index]];
         
         if (isNaN(count) || count <= 0) {
             alert('核销次数必须大于0');
@@ -646,20 +646,20 @@ const ResourceTracker = (() => {
         state.trainingHistory.push({
             category,
             index,
-            previousCount: completed,
+            previousCount: trainingItem.completed,
             count: actualCount,
             timestamp: new Date().toISOString()
         });
-        
         // 更新状态
-        state.training[category][index].completed = completed + actualCount;
+        trainingItem.completed += actualCount;
 
         // 检查是否有新的修为完成
-        [13, 15, 17].forEach(tier => {
-            const nowCompleted = checkTrainingCompletion(category, tier);
-            if (nowCompleted && !oldCompletions[tier]) {
-                state.trainingCompletions[category][tier] = 
-                    (state.trainingCompletions[category][tier] || 0) + 1;
+         [13, 15, 17].forEach(tier => {
+            const totalAvailable = checkTrainingCompletion(category, tier);
+            const alreadyCompleted = state.trainingCompletions[category][tier] || 0;
+            
+            if (totalAvailable > alreadyCompleted) {
+                state.trainingCompletions[category][tier] = totalAvailable;
             }
         });
 
@@ -872,7 +872,23 @@ const ResourceTracker = (() => {
     };
 
     // ==================== 工具函数 ====================
-
+    /**
+ * 兼容旧版数据迁移
+ * 说明：旧版本没有trainingCompletions字段，需要初始化
+ */
+const migrateOldData = (savedData) => {
+    // 如果是从旧版升级（没有trainingCompletions字段）
+    if (!savedData.trainingCompletions) {
+        console.log('检测到旧版数据，初始化修为完成记录...');
+        return {
+            yinYang: {13: 0, 15: 0, 17: 0},
+            windFire: {13: 0, 15: 0, 17: 0},
+            earthWater: {13: 0, 15: 0, 17: 0}
+        };
+    }
+    // 如果是新版数据，直接返回原有值
+    return savedData.trainingCompletions;
+};
     // 更新并保存数据
     const updateAndSave = () => {
         state.lastUpdated = new Date().toISOString();
