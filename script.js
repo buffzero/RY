@@ -101,6 +101,25 @@ const ResourceTracker = (() => {
             17: { 4: 6, 6: 12, 8: 24, 10: 35, 12: 47 }
         }
     };
+    // 格式化日期显示
+    const formatDate = (date) => {
+        return date.toLocaleString('zh-CN', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+        }).replace(/\//g, '-');
+    };
+    // 更新时间戳显示
+    const updateLastUpdated = () => {
+        if (state.lastUpdated && dom.lastUpdated) {
+            const date = new Date(state.lastUpdated);
+            dom.lastUpdated.textContent = `最近更新：${formatDate(date)}`;
+        }
+    };
 
     // ==================== 状态管理 ====================
     let state = {
@@ -175,7 +194,52 @@ const ResourceTracker = (() => {
             alert('系统初始化失败，请刷新页面重试');
         }
     };
+   // ==================== loadData 函数 ====================
+    const loadData = () => {
+        try {
+            const saved = localStorage.getItem(CONFIG.storageKey);
+            if (!saved) return;
 
+            const parsed = JSON.parse(saved);
+            
+            // 合并材料状态
+            const materials = {};
+            GAME_DATA.materials.forEach(material => {
+                materials[material.id] = parsed.materials?.[material.id] || false;
+            });
+
+            // 完整状态合并
+            state = {
+                ...resetState(),
+                ...parsed,
+                materials,
+                targetSelection: parsed.targetSelection || resetState().targetSelection,
+                trainingHistory: parsed.trainingHistory || [],
+                training: {
+                    yinYang: mergeTrainingData(parsed.training?.yinYang, 'yinYang'),
+                    windFire: mergeTrainingData(parsed.training?.windFire, 'windFire'),
+                    earthWater: mergeTrainingData(parsed.training?.earthWater, 'earthWater')
+                }
+            };
+            
+            updateLastUpdated();
+        } catch (e) {
+            console.error('数据加载失败:', e);
+            state = resetState();
+        }
+    };
+
+    // 辅助函数：合并历练数据
+    const mergeTrainingData = (savedData, category) => {
+        return (savedData || []).map((item, i) => ({
+            completed: item.completed || 0,
+            required: item.required >= 0 ? item.required : GAME_DATA.training[category][i].required,
+            userModified: item.userModified || false,
+            tier: item.tier || 17
+        }));
+    };
+
+// ==================== setupDOM 函数 ====================
 const setupDOM = () => {
   try {
     // 1. 检查主容器
@@ -628,15 +692,13 @@ container.innerHTML = `
     // ==================== 事件处理 ====================
 
     // 设置事件监听器
-   const setupEventListeners = () => {
-    // 使用事件委托，避免重复绑定
-    document.addEventListener('change', (e) => {
-        if (e.target.classList.contains('tier-select')) {
-            const category = e.target.dataset.category;
-            const tier = parseInt(e.target.value);
-            handleTierChange(category, tier);
-      }
-    });
+  const setupEventListeners = () => {
+  document.addEventListener('change', (e) => {
+    if (e.target.classList.contains('tier-select')) {
+      const category = e.target.dataset.category;
+      const tier = parseInt(e.target.value);
+      handleTierChange(category, tier);
+    }
                 // 找到对应的输入框
                 const input = btn.nextElementSibling;
                 if (!input || !input.classList.contains('custom-consume-input')) {
@@ -785,28 +847,6 @@ container.innerHTML = `
         saveData();
         renderAll();
     };
-
-    // 更新时间戳显示
-    const updateLastUpdated = () => {
-        if (state.lastUpdated && dom.lastUpdated) {
-            const date = new Date(state.lastUpdated);
-            dom.lastUpdated.textContent = `最近更新：${formatDate(date)}`;
-        }
-    };
-
-    // 格式化日期显示
-    const formatDate = (date) => {
-        return date.toLocaleString('zh-CN', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-            hour12: false
-        }).replace(/\//g, '-');
-    };
-
     // 保存数据到本地存储
     const saveData = () => {
         try {
