@@ -431,7 +431,7 @@ const setupDOM = () => {
 
     // 渲染单个历练类别
    const renderTrainingCategory = (category, container) => {
-     const floors = [4, 6, 8, 10, 12]; // 对应历练四/六/八/十/十二
+    const floors = [4, 6, 8, 10, 12]; // 对应历练四/六/八/十/十二
     // 1. 更健壮的数据检查
     if (!state.training[category]?.length) {
         console.error(`错误：${category} 的历练数据为空`);
@@ -645,18 +645,20 @@ const setupDOM = () => {
      * 处理修为切换
      */
   const handleTierChange = (category, tier) => {
-    const floors = [4, 6, 8, 10, 12]; // 历练四/六/八/十/十二
+    const floors = [4, 6, 8, 10, 12];
     
-    state.training[category].forEach((item, index) => {
+    state.training[category] = state.training[category].map((item, index) => {
         const floor = floors[index];
-        // 无论是否userModified都更新required值
-        item.required = GAME_DATA.trainingPresets[tier][floor];
-        item.tier = tier; // 强制更新修为等级
-        item.userModified = false; // 重置用户修改标记
+        return {
+            ...item,
+            required: GAME_DATA.trainingPresets[tier][floor],
+            tier: tier,
+            userModified: false  // 重置修改标记
+        };
     });
 
-    updateAndSave(); // 触发界面重新渲染
-    console.log(`切换到修为${tier}`, state.training[category]); // 调试日志
+    console.log(`修为切换至${tier}`, state.training[category]);
+    updateAndSave();
 };
     /**
      * 一键撤销分类
