@@ -930,3 +930,120 @@ button:disabled:hover {
   background: white;
   height: auto; /* 覆盖默认高度 */
 }
+/* 完成次数徽章样式 */
+.completion-badges {
+    display: flex;
+    gap: 6px;
+    margin-right: auto;
+    padding-left: 12px;
+}
+
+.completion-badge {
+    font-size: 12px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.9);
+    color: #333;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    line-height: 1;
+}
+
+/* 不同修为的徽章颜色 */
+.completion-badge.tier-13 {
+    background: linear-gradient(135deg, #a5d8ff, #74c0fc);
+    color: #1864ab;
+}
+
+.completion-badge.tier-15 {
+    background: linear-gradient(135deg, #b2f2bb, #40c057);
+    color: #2b8a3e;
+}
+
+.completion-badge.tier-17 {
+    background: linear-gradient(135deg, #ffc9c9, #fa5252);
+    color: #c92a2a;
+}
+
+/* 调整标题布局 */
+.training-category-title {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px 12px !important;
+}
+/* 移动端适配 - 历练标题区域 */
+@media (max-width: 600px) {
+    .training-category-title {
+        flex-direction: column; /* 改为垂直布局 */
+        align-items: flex-start;
+        gap: 6px;
+        padding: 10px !important;
+    }
+    
+    .completion-badges {
+        margin-right: 0;
+        padding-left: 0;
+        width: 100%;
+        order: 1; /* 徽章移到第一行 */
+        margin-bottom: 4px;
+    }
+    
+    .tier-select {
+        order: 2; /* 选择器第二行 */
+        margin-left: 0 !important;
+        width: 100%;
+    }
+    
+    .reset-category-btn {
+        order: 3; /* 按钮第三行 */
+        margin-left: 0 !important;
+        width: 100%;
+        margin-top: 4px;
+    }
+    
+    /* 徽章缩小并换行显示 */
+    .completion-badge {
+        font-size: 11px;
+        padding: 1px 4px;
+    }
+}
+
+/* 超小屏幕优化 */
+@media (max-width: 340px) {
+    .completion-badge {
+        font-size: 10px;
+    }
+}
+/* 新增通用样式 */
+.category-name {
+    font-weight: 600;
+    margin-right: auto;
+}
+
+.training-controls {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+}
+
+/* 移动端 - 控制按钮组 */
+@media (max-width: 600px) {
+    .training-controls {
+        flex-direction: column;
+        gap: 6px;
+    }
+    
+    .tier-select, .reset-category-btn {
+        flex: 1;
+    }
+    
+    .category-name {
+        width: 100%;
+        margin-bottom: 6px;
+        font-size: 1.05em;
+    }
+}
