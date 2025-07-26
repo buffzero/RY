@@ -644,7 +644,7 @@ const setupDOM = () => {
     /**
      * 处理修为切换
      */
-  const handleTierChange = (category, tier) => {
+const handleTierChange = (category, tier) => {
     const floors = [4, 6, 8, 10, 12];
     
     state.training[category] = state.training[category].map((item, index) => {
@@ -658,7 +658,7 @@ const setupDOM = () => {
     });
 
     console.log(`修为切换至${tier}`, state.training[category]);
-    updateAndSave();
+    updateAndSave(); // 添加这行代码以触发界面刷新
 };
     /**
      * 一键撤销分类
