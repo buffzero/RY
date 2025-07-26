@@ -2,6 +2,11 @@
  * 密探升级助手 - 资源追踪系统
  * 功能：追踪升级材料、历练进度和属性状态
  */
+window.addEventListener('error', (e) => {
+  console.error('全局错误:', e.message);
+  alert(`脚本加载错误: ${e.message}\n请检查控制台详情`);
+});
+
 const ResourceTracker = (() => {
     // ==================== 配置常量 ====================
     const CONFIG = {
@@ -171,42 +176,60 @@ const ResourceTracker = (() => {
         }
     };
 
-  const setupDOM = () => {
-    // 确保容器存在
+const setupDOM = () => {
+  try {
+    // 1. 检查主容器
     dom.container = document.querySelector(CONFIG.containerId);
     if (!dom.container) {
-        throw new Error('主容器 #resourceTracker 未找到');
+      throw new Error('主容器 #resourceTracker 未找到');
     }
 
-    // 初始化所有元素引用
-    Object.entries(CONFIG.elements).forEach(([key, selector]) => {
-        try {
-            dom[key] = document.querySelector(selector);
-            if (!dom[key] && key !== 'lastUpdated') {
-                console.warn(`⚠️ 元素未找到: ${selector}`);
-            }
-        } catch (error) {
-            console.error(`初始化元素 ${selector} 失败:`, error);
-        }
+    // 2. 检查关键必需元素（会阻断运行的元素）
+    const criticalElements = [
+      'classStatus', 
+      'attributeStatus',
+      'materialsList',
+      'moneyCheck',
+      'fragments',
+      'scrolls'
+    ];
+    
+    criticalElements.forEach(key => {
+      const selector = CONFIG.elements[key];
+      dom[key] = document.querySelector(selector);
+      if (!dom[key]) {
+        throw new Error(`关键元素 ${selector} 未找到`);
+      }
     });
-  // 特殊处理必须存在的元素
-  if (!dom.moneyCheck || !dom.fragments || !dom.scrolls) {
-    throw new Error('关键表单元素未找到');
+
+    // 3. 初始化其他元素（非关键元素只警告不报错）
+    Object.entries(CONFIG.elements).forEach(([key, selector]) => {
+      if (!criticalElements.includes(key)) { // 跳过已检查的关键元素
+        try {
+          dom[key] = document.querySelector(selector);
+          if (!dom[key] && key !== 'lastUpdated') {
+            console.warn(`⚠️ 非关键元素未找到: ${selector}`);
+          }
+        } catch (error) {
+          console.error(`初始化元素 ${selector} 失败:`, error);
+        }
+      }
+    });
+
+  } catch (e) {
+    console.error('DOM初始化失败:', e);
+    document.body.innerHTML = `
+      <div style="color:red;padding:20px;font-family:sans-serif">
+        <h2>系统初始化失败</h2>
+        <p>${e.message}</p>
+        <button onclick="location.reload()" style="padding:8px 16px;margin-top:10px;">
+          刷新页面
+        </button>
+      </div>
+    `;
+    throw e; // 阻止后续执行
   }
 };
-
-const loadData = () => {
-  try {
-    const saved = localStorage.getItem(CONFIG.storageKey);
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      
-      // 初始化材料状态
-      const materials = {};
-      GAME_DATA.materials.forEach(material => {
-        materials[material.id] = parsed.materials?.[material.id] || false;
-      });
-      
       // 合并状态
     // 修改为（兼容性写法）
 state = Object.assign({}, resetState(), parsed, {
