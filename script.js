@@ -618,53 +618,56 @@ const ResourceTracker = (() => {
 
     // 处理核销操作
     const handleConsume = (category, index, count) => {
-        const trainingItem = state.training[category][index] || { completed: 0 };
-        const required = trainingItem.userModified 
-            ? trainingItem.required 
-            : GAME_DATA.trainingPresets[trainingItem.tier][[4,6,8,10,12][index]];
+    const trainingItem = state.training[category][index] || { completed: 0 };
+    const required = trainingItem.userModified 
+        ? trainingItem.required 
+        : GAME_DATA.trainingPresets[trainingItem.tier][[4,6,8,10,12][index]];
+    
+    // 计算剩余次数
+    const remaining = Math.max(0, required - (trainingItem.completed || 0));
+    
+    if (isNaN(count) || count <= 0) {
+        alert('核销次数必须大于0');
+        return;
+    }
+    
+    if (count > remaining) {
+        alert(`核销次数不能超过剩余次数（${remaining}）`);
+        return;
+    }
+    
+    const actualCount = Math.min(count, remaining);
+    if (actualCount <= 0) return;
+    
+    // 更新状态前先保存旧的完成状态
+    const oldCompletions = {};
+    [13, 15, 17].forEach(tier => {
+        oldCompletions[tier] = checkTrainingCompletion(category, tier);
+    });
+
+    // 记录操作历史
+    state.trainingHistory.push({
+        category,
+        index,
+        previousCount: trainingItem.completed,
+        count: actualCount,
+        timestamp: new Date().toISOString()
+    });
+    // 更新状态
+    trainingItem.completed += actualCount;
+
+    // 检查是否有新的修为完成
+     [13, 15, 17].forEach(tier => {
+        const totalAvailable = checkTrainingCompletion(category, tier);
+        const alreadyCompleted = state.trainingCompletions[category][tier] || 0;
         
-        if (isNaN(count) || count <= 0) {
-            alert('核销次数必须大于0');
-            return;
+        if (totalAvailable > alreadyCompleted) {
+            state.trainingCompletions[category][tier] = totalAvailable;
         }
-        
-        if (count > remaining) {
-            alert(`核销次数不能超过剩余次数（${remaining}）`);
-            return;
-        }
-        
-        const actualCount = Math.min(count, remaining);
-        if (actualCount <= 0) return;
-        
-        // 更新状态前先保存旧的完成状态
-        const oldCompletions = {};
-        [13, 15, 17].forEach(tier => {
-            oldCompletions[tier] = checkTrainingCompletion(category, tier);
-        });
+    });
 
-        // 记录操作历史
-        state.trainingHistory.push({
-            category,
-            index,
-            previousCount: trainingItem.completed,
-            count: actualCount,
-            timestamp: new Date().toISOString()
-        });
-        // 更新状态
-        trainingItem.completed += actualCount;
-
-        // 检查是否有新的修为完成
-         [13, 15, 17].forEach(tier => {
-            const totalAvailable = checkTrainingCompletion(category, tier);
-            const alreadyCompleted = state.trainingCompletions[category][tier] || 0;
-            
-            if (totalAvailable > alreadyCompleted) {
-                state.trainingCompletions[category][tier] = totalAvailable;
-            }
-        });
-
-        updateAndSave();
-    };
+    updateAndSave();
+};
     
     // 处理撤销操作
     const handleUndo = (category, index) => {
