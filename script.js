@@ -911,7 +911,17 @@ const migrateOldData = (savedData) => {
     // 如果是新版数据，直接返回原有值
     return savedData.trainingCompletions;
 };
-
+// 获取职业对应的CSS类名
+const getClassKey = (className) => {
+    const classMap = {
+        '诡道': 'guidao',
+        '神纪': 'shenji',
+        '岐黄': 'qihuang',
+        '龙盾': 'longdun',
+        '破军': 'pojun'
+    };
+    return classMap[className] || '';
+};
 // ==================== 公共接口 ====================
 return {
         init,
