@@ -107,7 +107,18 @@ const ResourceTracker = (() => {
             17: { 4: 6, 6: 12, 8: 24, 10: 35, 12: 47 }
         }
     };
+       const clearTierCompletion = (category, tier) => {
+    if (state.trainingCompletions[category] && state.trainingCompletions[category][tier]) {
+        state.trainingCompletions[category][tier] = 0;
+        updateAndSave();
+    }
+};
 
+// 修改公共接口
+return { 
+    init,
+    clearTierCompletion  // 暴露新方法
+}; 
     // 格式化日期显示
     const formatDate = (date) => {
         return date.toLocaleString('zh-CN', {
@@ -458,39 +469,42 @@ const ResourceTracker = (() => {
     
     // 生成修为徽章（显示已完成+可完成次数）
     const completionBadges = [13, 15, 17].map(tier => {
-        const completed = state.trainingCompletions[category][tier] || 0;
-        const available = checkTrainingCompletion(category, tier) - completed;
-        
-        if (completed > 0 || available > 0) {
-            return `
-                <span class="completion-badge tier-${tier} 
-                      ${available > 0 ? 'available' : ''}"
-                      title="${categoryName}·修为${tier}：
-                      已完成 ${completed}次
-                      ${available > 0 ? `可领取 +${available}次` : ''}">
-                    ${tier}: ${completed}${available > 0 ? `(+${available})` : ''}
-                </span>
-            `;
-        }
-        return '';
-    }).filter(Boolean).join('');
-
-        container.innerHTML = `
-            <div class="training-category-title">
-                <span class="category-name">${categoryName}</span>
-                <div class="completion-badges">${completionBadges}</div>
-                <div class="training-controls">
-                    <select class="tier-select" data-category="${category}">
-                        ${[13, 15, 17].map(tier => `
-                            <option value="${tier}" 
-                                ${state.training[category][0].tier === tier ? 'selected' : ''}>
-                                修为${tier}
-                            </option>
-                        `).join('')}
-                    </select>
-                    <button class="reset-category-btn" data-category="${category}">一键撤销</button>
-                </div>
-            </div>
+    const completed = state.trainingCompletions[category][tier] || 0;
+    // 添加检查：如果当前选择的tier不是这个徽章的tier，则不显示可领取状态
+    const available = (trainingItem.tier === tier) 
+        ? checkTrainingCompletion(category, tier) - completed 
+        : 0;
+    
+    if (completed > 0 || available > 0) {
+        return `
+            <span class="completion-badge tier-${tier} 
+                  ${available > 0 ? 'available' : ''}"
+                  title="${categoryName}·修为${tier}：
+                  已完成 ${completed}次
+                  ${available > 0 ? `可领取 +${available}次` : ''}">
+                ${tier}: ${completed}${available > 0 ? `(+${available})` : ''}
+            </span>
+        `;
+    }
+    return '';
+}).filter(Boolean).join('');
+       container.innerHTML = `
+    <div class="training-category-title">
+        <span class="category-name">${categoryName}</span>
+        <div class="completion-badges">${completionBadges}</div>
+        <div class="training-controls">
+            <select class="tier-select" data-category="${category}">
+                ${[13, 15, 17].map(tier => `
+                    <option value="${tier}" 
+                        ${state.training[category][0].tier === tier ? 'selected' : ''}>
+                        修为${tier}
+                    </option>
+                `).join('')}
+            </select>
+            <button class="reset-category-btn" data-category="${category}">一键撤销</button>
+            <button class="clear-tier-btn" data-category="${category}" data-tier="17">清除17修为</button>
+        </div>
+    </div>
             ${GAME_DATA.training[category].map((item, index) => {
                 const trainingItem = state.training[category][index] || { completed: 0 };
                 const floor = floors[index];
@@ -846,7 +860,15 @@ const ResourceTracker = (() => {
                 return;
             }
         });
-
+            if (e.target.classList.contains('clear-tier-btn')) {
+    const category = e.target.dataset.category;
+    const tier = parseInt(e.target.dataset.tier);
+    if (confirm(`确定要清除${getCategoryName(category)}的修为${tier}完成记录吗？`)) {
+        clearTierCompletion(category, tier);
+    }
+    e.stopPropagation();
+    return;
+}
         // 4. 独立监听的元素
         dom.moneyCheck.addEventListener('change', () => {
             state.moneyChecked = dom.moneyCheck.checked;
