@@ -906,14 +906,18 @@ const migrateOldData = (savedData) => {
     // 如果是新版数据，直接返回原有值
     return savedData.trainingCompletions;
 };
-
+// ==================== 操作处理 ====================
+    const clearTierCompletion = (category, tier) => {
+        if (state.trainingCompletions[category] && state.trainingCompletions[category][tier]) {
+            state.trainingCompletions[category][tier] = 0;
+            updateAndSave();
+        }
+    };
 // ==================== 公共接口 ====================
 return { 
     init,
-    clearTierCompletion  // 暴露新方法
+    clearTierCompletion  // 确保这个方法被正确导出
 };
-})();
-
 // ==================== 初始化 ====================
 document.addEventListener('DOMContentLoaded', () => {
     if (!('localStorage' in window)) {
