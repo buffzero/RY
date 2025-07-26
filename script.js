@@ -448,33 +448,34 @@ const setupDOM = () => {
     console.groupEnd();
 
     // 3. 渲染逻辑（保持不变）
-container.innerHTML = `
-    <div class="training-category-title">
-        ${category === 'yinYang' ? '阴阳历练' : 
-          category === 'windFire' ? '风火历练' : '地水历练'}
-        <select class="tier-select" data-category="${category}">
-            ${[13, 15, 17].map(tier => `
-                <option value="${tier}" 
-                    ${currentTier === tier ? 'selected' : ''}>
-                    修为${tier}
-                </option>
-            `).join('')}
-        </select>
-        <button class="reset-category-btn">一键撤销</button>
-    </div>
-            ${GAME_DATA.training[category].map((item, index) => {
-    const trainingItem = state.training[category][index] || { completed: 0 };
-    const floor = floors[index]; // 现在可以安全使用
-    
-    const required = trainingItem.userModified ?
-        trainingItem.required :
-        GAME_DATA.trainingPresets[trainingItem.tier][floor];
+ container.innerHTML = `
+        <div class="training-category-title">
+            ${category === 'yinYang' ? '阴阳历练' : 
+              category === 'windFire' ? '风火历练' : '地水历练'}
+            <select class="tier-select" data-category="${category}">
+                ${[13, 15, 17].map(tier => `
+                    <option value="${tier}" 
+                        ${state.training[category][0].tier === tier ? 'selected' : ''}>
+                        修为${tier}
+                    </option>
+                `).join('')}
+            </select>
+            <button class="reset-category-btn">一键撤销</button>
+        </div>
+        ${GAME_DATA.training[category].map((item, index) => {
+            const trainingItem = state.training[category][index] || { completed: 0 };
+            const floor = floors[index];
+            
+            const required = trainingItem.userModified ?
+                trainingItem.required :
+                GAME_DATA.trainingPresets[trainingItem.tier][floor];
                 
             const completed = trainingItem.completed || 0;
             const isMet = completed >= required;
             const remaining = required - completed;
+            
             return `
-                    <div class="training-item">
+                <div class="training-item">
                         <div class="training-header">
                             <div class="training-name">${item.name}</div>
                             <div class="training-input-status">
