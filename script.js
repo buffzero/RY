@@ -273,18 +273,29 @@ const dom = {}; // 缓存DOM元素
     };
 
     // 检查历练完成情况
-   const checkTrainingCompletion = (category, tier) => {
-        const floors = [4, 6, 8, 10, 12];
-        let minCompletion = Infinity;
-        
-        floors.forEach((floor, index) => {
-            const required = GAME_DATA.trainingPresets[tier][floor];
-            const completed = state.training[category][index].completed;
-            minCompletion = Math.min(minCompletion, Math.floor(completed / required));
-        });
-        
-        return minCompletion === Infinity ? 0 : minCompletion;
-    };
+  const checkTrainingCompletion = (category, tier) => {
+    const floors = [4, 6, 8, 10, 12];
+    let minCompletion = Infinity;
+
+    floors.forEach((floor, index) => {
+        const required = GAME_DATA.trainingPresets[tier][floor];
+        const completed = state.training[category][index].completed;
+
+        // 关键逻辑：计算可用次数时，优先扣除17级占用的部分
+        let available = completed;
+        if (tier < 17) {
+            const usedBy17 = GAME_DATA.trainingPresets[17][floor];
+            available = Math.max(0, completed - usedBy17);
+        }
+
+        // 如果当前修为需求为0，跳过计算（避免除以0）
+        if (required > 0) {
+            minCompletion = Math.min(minCompletion, Math.floor(available / required));
+        }
+    });
+
+    return minCompletion === Infinity ? 0 : minCompletion;
+};
 
     // ==================== setupDOM 函数 ====================
     const setupDOM = () => {
@@ -476,19 +487,21 @@ const dom = {}; // 缓存DOM元素
     // 生成修为徽章（显示已完成+可完成次数）
     const completionBadges = [13, 15, 17].map(tier => {
     const completed = state.trainingCompletions[category][tier] || 0;
-    const currentTier = state.training[category][0].tier; // 获取当前选择的tier
-    const available = (currentTier === tier) 
-        ? checkTrainingCompletion(category, tier) - completed 
-        : 0;
+    const currentTier = state.training[category][0].tier;
     
-    if (completed > 0 || available > 0) {
+    // 新增：计算被17级占用的次数
+    const usedBy17 = (tier < 17) 
+        ? GAME_DATA.trainingPresets[17][[4,6,8,10,12][index]] 
+        : 0;
+
+    // 仅当有记录或可领取时显示徽章
+    if (completed > 0 || (currentTier === tier && checkTrainingCompletion(category, tier) > completed)) {
         return `
-            <span class="completion-badge tier-${tier} 
-                  ${available > 0 ? 'available' : ''}"
+            <span class="completion-badge tier-${tier}" 
                   title="${categoryName}·修为${tier}：
-                  已完成 ${completed}次
-                  ${available > 0 ? `可领取 +${available}次` : ''}">
-                ${tier}: ${completed}${available > 0 ? `(+${available})` : ''}
+                  - 已完成 ${completed}次
+                  ${usedBy17 > 0 ? `- 其中 ${usedBy17}次 被17级占用` : ''}">
+                ${tier}: ${completed}
             </span>
         `;
     }
@@ -635,12 +648,25 @@ const dom = {}; // 缓存DOM元素
     };
 
     // ==================== 操作处理 ====================
-    const clearTierCompletion = (category, tier) => {
-        if (state.trainingCompletions[category] && state.trainingCompletions[category][tier]) {
-            state.trainingCompletions[category][tier] = 0;
-            updateAndSave();
-        }
-    };
+   const clearTierCompletion = (category, tier) => {
+    if (!state.trainingCompletions[category]?.[tier]) return;
+
+    // 1. 清除完成记录
+    state.trainingCompletions[category][tier] = 0;
+
+    // 2. 如果是清除17级修为，需同步修正实际完成次数
+    if (tier === 17) {
+        const floors = [4, 6, 8, 10, 12];
+        state.training[category].forEach((item, index) => {
+            const floor = floors[index];
+            const maxRequired = GAME_DATA.trainingPresets[17][floor];
+            // 确保完成次数不超过17级所需的最大值（关键修改！）
+            item.completed = Math.min(item.completed, maxRequired);
+        });
+    }
+
+    updateAndSave(); // 更新界面
+};
     // 处理核销操作
     const handleConsume = (category, index, count) => {
     const trainingItem = state.training[category][index] || { completed: 0 };
