@@ -208,13 +208,12 @@ const loadData = () => {
       });
       
       // 合并状态
-      state = {
-        ...resetState(),
-        ...parsed,
-        materials,
-        targetSelection: parsed.targetSelection || resetState().targetSelection,
-        trainingHistory: parsed.trainingHistory || []
-      };
+    // 修改为（兼容性写法）
+state = Object.assign({}, resetState(), parsed, {
+  materials: materials,
+  targetSelection: parsed.targetSelection || resetState().targetSelection,
+  trainingHistory: parsed.trainingHistory || []
+});
 
       // 确保历练状态正确加载
       ['yinYang', 'windFire', 'earthWater'].forEach(category => {
