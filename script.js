@@ -649,16 +649,19 @@ const handleTierChange = (category, tier) => {
     
     state.training[category] = state.training[category].map((item, index) => {
         const floor = floors[index];
+        const newRequired = GAME_DATA.trainingPresets[tier][floor];
+        
         return {
             ...item,
-            required: GAME_DATA.trainingPresets[tier][floor],
+            required: newRequired,
             tier: tier,
-            userModified: false  // 重置修改标记
+            userModified: false
         };
     });
 
-    console.log(`修为切换至${tier}`, state.training[category]);
-    updateAndSave(); // 添加这行代码以触发界面刷新
+    // 强制重新渲染历练部分
+    renderTraining();
+    saveData();
 };
     /**
      * 一键撤销分类
@@ -700,15 +703,13 @@ const getCategoryName = (category) => {
 const setupEventListeners = () => {
     // 1. 通用change事件监听（修为切换+目标选择+材料勾选）
     document.addEventListener('change', (e) => {
-        // 修为切换监听
-        if (e.target.classList.contains('reset-category-btn')) {
-    const category = e.target.dataset.category;
-    if (category) {
-        handleResetCategory(category);
-    } else {
-        console.error('撤销按钮缺少data-category属性', e.target);
-    }
-}
+        // 添加修为切换监听
+        if (e.target.classList.contains('tier-select')) {
+            const category = e.target.dataset.category;
+            const tier = parseInt(e.target.value);
+            handleTierChange(category, tier);
+            return;
+        }
 
         // 目标密探选择监听
         if (e.target.matches('.target-section input[type="checkbox"]')) {
