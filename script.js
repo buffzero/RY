@@ -96,10 +96,19 @@ const ResourceTracker = (() => {
             ]
         },
         trainingPresets: {
-            13: { 4: 6, 6: 12, 8: 24, 10: 16, 12: 1 },
-            15: { 4: 6, 6: 12, 8: 24, 10: 35, 12: 12 },
-            17: { 4: 6, 6: 12, 8: 24, 10: 35, 12: 47 }
-        }
+    // 修为13的预设
+    13: { 
+        4: 6,   // 历练四需要6次
+        6: 12,  // 历练六需要12次
+        8: 24,  // 历练八需要24次
+        10: 16, // 历练十需要16次
+        12: 1   // 历练十二需要1次
+    },
+    // 修为15的预设
+    15: { 4: 6, 6: 12, 8: 24, 10: 35, 12: 12 },
+    // 修为17的预设
+    17: { 4: 6, 6: 12, 8: 24, 10: 35, 12: 47 }
+}
     };
     // 格式化日期显示
     const formatDate = (date) => {
@@ -454,14 +463,14 @@ container.innerHTML = `
     </div>
             ${GAME_DATA.training[category].map((item, index) => {
                 const trainingItem = state.training[category][index] || { completed: 0 };
+                 const required = trainingItem.userModified ?
+                trainingItem.required :
+                GAME_DATA.trainingPresets[trainingItem.tier][floor];
                 
-                const required = trainingItem.userModified ? 
-                    trainingItem.required : 
-                    item.required;
-                const completed = trainingItem.completed || 0;
-                const isMet = required === 0 || completed >= required;
-                const remaining = required - completed;
-                return `
+            const completed = trainingItem.completed || 0;
+            const isMet = completed >= required;
+            
+            return `
                     <div class="training-item">
                         <div class="training-header">
                             <div class="training-name">${item.name}</div>
@@ -632,7 +641,7 @@ container.innerHTML = `
      * 处理修为切换
      */
   const handleTierChange = (category, tier) => {
-    const floors = [4, 6, 8, 10, 12]; // 必须与 trainingPresets 的键完全一致
+    const floors = [4, 6, 8, 10, 12]; // 历练四/六/八/十/十二
     
     state.training[category].forEach((item, index) => {
         const floor = floors[index];
