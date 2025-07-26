@@ -460,7 +460,7 @@ const setupDOM = () => {
                     </option>
                 `).join('')}
             </select>
-            <button class="reset-category-btn">一键撤销</button>
+          <button class="reset-category-btn" data-category="${category}">一键撤销</button>
         </div>
         ${GAME_DATA.training[category].map((item, index) => {
             const trainingItem = state.training[category][index] || { completed: 0 };
@@ -662,29 +662,51 @@ const setupDOM = () => {
      * 一键撤销分类
      */
     const handleResetCategory = (category) => {
-        if (confirm(`确定要重置【${category}】的所有进度吗？`)) {
+    // 添加数据校验
+    if (!category || !state.training || !state.training[category]) {
+        console.error('无效的历练类别:', category);
+        return;
+    }
+
+    if (confirm(`确定要重置【${getCategoryName(category)}】的所有进度吗？`)) {
+        // 安全遍历
+        if (Array.isArray(state.training[category])) {
             state.training[category].forEach(item => {
                 item.completed = 0;
             });
+            
             // 清除相关历史记录
             state.trainingHistory = state.trainingHistory.filter(
                 record => record.category !== category
             );
+            
             updateAndSave();
         }
-    };
+    }
+};
 
+// 添加辅助函数
+const getCategoryName = (category) => {
+    const names = {
+        yinYang: '阴阳历练',
+        windFire: '风火历练', 
+        earthWater: '地水历练'
+    };
+    return names[category] || category;
+};
     // ==================== 事件处理 ====================
 const setupEventListeners = () => {
     // 1. 通用change事件监听（修为切换+目标选择+材料勾选）
     document.addEventListener('change', (e) => {
         // 修为切换监听
-        if (e.target.classList.contains('tier-select')) {
-            const category = e.target.dataset.category;
-            const tier = parseInt(e.target.value);
-            handleTierChange(category, tier);
-            return;
-        }
+        if (e.target.classList.contains('reset-category-btn')) {
+    const category = e.target.dataset.category;
+    if (category) {
+        handleResetCategory(category);
+    } else {
+        console.error('撤销按钮缺少data-category属性', e.target);
+    }
+}
 
         // 目标密探选择监听
         if (e.target.matches('.target-section input[type="checkbox"]')) {
