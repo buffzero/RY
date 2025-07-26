@@ -62,9 +62,7 @@
         </div>
       </div>
       
-      
-      
-      <div id="resourceTracker">
+    <div id="resourceTracker">
         <!-- 标题 -->
         <div class="status-board">
             <h2>当前可升级密探</h2>
@@ -86,7 +84,6 @@
               </div>
             </div>
           </div>
-          
         
         <!-- 金钱及经验 -->
         <div class="section">
@@ -96,12 +93,13 @@
                     <div class="resource-name">五铢钱 417万</div>
                     <div class="checkbox-container">
                         <input type="checkbox" id="money-check">
+                        <label for="money-check" class="material-checkbox"></label>
                     </div>
                 </div>
                 <div class="resource-item">
                     <div class="resource-name">经验值 2386300</div>
                     <div class="checkbox-container">
-                        <div class="exp-status not-met" id="exp-status">未满足</div>
+                        <div class="sub-status-indicator not-met" id="exp-status">未满足</div>
                     </div>
                 </div>
             </div>
@@ -126,29 +124,29 @@
             </div>
         </div>
         
-   <!-- 历练材料部分 -->
-<div class="section">
-    <div class="section-title">历练材料</div>
-    <div class="training-container">
-        <!-- 阴阳历练 -->
-        <div class="training-category" id="yinYangTraining"></div>
+        <!-- 历练材料部分 -->
+        <div class="section">
+            <div class="section-title">历练材料</div>
+            <div class="training-container">
+                <!-- 阴阳历练 -->
+                <div class="training-category" id="yinYangTraining"></div>
 
-        <!-- 风火历练 -->
-        <div class="training-category" id="windFireTraining"></div>
+                <!-- 风火历练 -->
+                <div class="training-category" id="windFireTraining"></div>
 
-        <!-- 地水历练 -->
-        <div class="training-category" id="earthWaterTraining"></div>
-    </div>
-</div>
+                <!-- 地水历练 -->
+                <div class="training-category" id="earthWaterTraining"></div>
+            </div>
+        </div>
  
- <!-- 页脚控制按钮 - 修正位置 -->
+        <!-- 页脚控制按钮 -->
         <div class="footer-controls">
             <button id="resetButton" class="btn-reset">重置所有数据</button>
             <span id="lastUpdated"></span>
         </div>
     </div>
 
-    <!-- 脚本加载 - 简化版本 -->
+    <!-- 脚本加载 -->
     <script src="script.js"></script>
 </body>
 </html>
