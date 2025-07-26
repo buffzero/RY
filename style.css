@@ -1037,3 +1037,21 @@ button:disabled:hover {
     gap: 8px;
     width: 100%;
 }
+/* 可完成状态的徽章 */
+.completion-badge.available {
+    animation: pulse 1.5s infinite;
+    border: 1px solid var(--green);
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* 数字显示优化 */
+.completion-badge::after {
+    content: "次";
+    font-size: 0.8em;
+    opacity: 0.7;
+}
