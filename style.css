@@ -880,6 +880,8 @@ button:disabled:hover {
 .custom-consume {
     background: var(--blue);
     color: rgb(41, 41, 41);
+ padding: 8px 12px;
+  border-radius: var(--radius-sm);
 }
 
 .custom-consume-input {
@@ -920,10 +922,11 @@ button:disabled:hover {
 }
 /* 修为选择器 */
 .tier-select {
-    margin-left: 10px;
-    padding: 3px 5px;
-    border-radius: 4px;
-    border: 1px solid var(--gray-200);
-    font-size: 12px;
-    background: white;
+  margin-left: 10px;
+  padding: 3px 5px;
+  border-radius: 4px;
+  border: 1px solid var(--gray-200);
+  font-size: 12px;
+  background: white;
+  height: auto; /* 覆盖默认高度 */
 }
