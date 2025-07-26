@@ -618,7 +618,12 @@ const ResourceTracker = (() => {
     };
 
     // ==================== 操作处理 ====================
-
+    const clearTierCompletion = (category, tier) => {
+        if (state.trainingCompletions[category] && state.trainingCompletions[category][tier]) {
+            state.trainingCompletions[category][tier] = 0;
+            updateAndSave();
+        }
+    };
     // 处理核销操作
     const handleConsume = (category, index, count) => {
     const trainingItem = state.training[category][index] || { completed: 0 };
@@ -906,18 +911,13 @@ const migrateOldData = (savedData) => {
     // 如果是新版数据，直接返回原有值
     return savedData.trainingCompletions;
 };
-// ==================== 操作处理 ====================
-    const clearTierCompletion = (category, tier) => {
-        if (state.trainingCompletions[category] && state.trainingCompletions[category][tier]) {
-            state.trainingCompletions[category][tier] = 0;
-            updateAndSave();
-        }
-    };
+
 // ==================== 公共接口 ====================
-return { 
-    init,
-    clearTierCompletion  // 确保这个方法被正确导出
-};
+return {
+        init,
+        clearTierCompletion
+    };
+})();
 // ==================== 初始化 ====================
 document.addEventListener('DOMContentLoaded', () => {
     if (!('localStorage' in window)) {
