@@ -746,257 +746,174 @@ const ResourceTracker = (() => {
         return names[category] || category;
     };
 
-    // ==================== 事件处理 ====================
-    const setupEventListeners = () => {
-        // 1. 通用change事件监听
-        document.addEventListener('change', (e) => {
-            // 修为切换监听
-            if (e.target.classList.contains('tier-select')) {
-                const category = e.target.dataset.category;
-                const tier = parseInt(e.target.value);
-                handleTierChange(category, tier);
-                return;
-            }
+  // ==================== 事件处理 ====================
+const setupEventListeners = () => {
+    // 1. 通用change事件监听
+    document.addEventListener('change', (e) => {
+        // 修为切换监听
+        if (e.target.classList.contains('tier-select')) {
+            const category = e.target.dataset.category;
+            const tier = parseInt(e.target.value);
+            handleTierChange(category, tier);
+            return;
+        }
 
-            // 目标密探选择监听
-            if (e.target.matches('.target-section input[type="checkbox"]')) {
-                const checkbox = e.target;
-                const type = checkbox.dataset.type;
-                const value = checkbox.dataset.value;
-                
-                if (type === 'class') {
-                    state.targetSelection.classes[value] = checkbox.checked;
-                } else if (type === 'attribute') {
-                    state.targetSelection.attributes[value] = checkbox.checked;
-                }
-                updateAndSave();
-                return;
-            }
-
-            // 材料勾选监听
-            if (e.target.matches('#materials-list input[type="checkbox"]')) {
-                const materialId = e.target.id.replace('-check', '');
-                state.materials[materialId] = e.target.checked;
-                updateAndSave();
-            }
-        });
-
-        // 2. 输入框监听
-        const handleInputChange = (e) => {
-            // 兵书数量输入
-            if (e.target === dom.fragments || e.target === dom.scrolls) {
-                state[e.target.id === 'bingshu_canjuan' ? 'fragments' : 'scrolls'] = 
-                    parseInt(e.target.value) || 0;
-                updateAndSave();
-                return;
-            }
-
-            // 历练次数输入
-            if (e.target.classList.contains('training-count-input')) {
-                const input = e.target;
-                const category = input.dataset.category;
-                const index = parseInt(input.dataset.index);
-                
-                input.value = input.value.replace(/[^0-9]/g, '');
-                const newValue = parseInt(input.value) || 0;
-                
-                state.training[category][index].required = newValue;
-                state.training[category][index].userModified = true;
-                
-                clearTimeout(input.saveTimeout);
-                input.saveTimeout = setTimeout(() => updateAndSave(), 500);
-            }
-        };
-        document.addEventListener('input', handleInputChange);
-
-        // 3. 按钮点击监听
-        document.addEventListener('click', (e) => {
-            // 核销按钮
-            if (e.target.classList.contains('consume-btn')) {
-                const btn = e.target;
-                let count;
-                
-                if (btn.classList.contains('custom-consume')) {
-                    const input = btn.nextElementSibling;
-                    if (!input?.classList.contains('custom-consume-input')) return;
-                    count = parseInt(input.value) || 0;
-                } else {
-                    count = parseInt(btn.dataset.count) || 1;
-                }
-                
-                if (count > 0) {
-                    handleConsume(
-                        btn.dataset.category,
-                        parseInt(btn.dataset.index),
-                        count
-                    );
-                }
-                e.stopPropagation();
-                return;
-            }
-
-            // 撤销按钮
-            if (e.target.classList.contains('undo-btn')) {
-                const btn = e.target;
-                handleUndo(btn.dataset.category, parseInt(btn.dataset.index));
-                e.stopPropagation();
-                return;
-            }
-
-            // 一键撤销分类
-            if (e.target.classList.contains('reset-category-btn')) {
-                handleResetCategory(e.target.dataset.category);
-                return;
-            }
-        });
-            if (e.target.classList.contains('clear-tier-btn')) {
-    const category = e.target.dataset.category;
-    const tier = parseInt(e.target.dataset.tier);
-    if (confirm(`确定要清除${getCategoryName(category)}的修为${tier}完成记录吗？`)) {
-        clearTierCompletion(category, tier);
-    }
-    e.stopPropagation();
-    return;
-}
-        // 4. 独立监听的元素
-        dom.moneyCheck.addEventListener('change', () => {
-            state.moneyChecked = dom.moneyCheck.checked;
-            updateAndSave();
-        });
-
-        dom.resetButton.addEventListener('click', () => {
-            if (confirm('确定要清空所有记录吗？')) {
-                state = resetState();
-                updateAndSave();
-            }
-        });
-
-        // 5. 键盘快捷键支持
-        document.addEventListener('keydown', (e) => {
-            if (e.target.tagName === 'INPUT') return;
+        // 目标密探选择监听
+        if (e.target.matches('.target-section input[type="checkbox"]')) {
+            const checkbox = e.target;
+            const type = checkbox.dataset.type;
+            const value = checkbox.dataset.value;
             
-            if (e.key === '1') {
-                document.querySelector('.consume-btn[data-count="1"]')?.click();
-            } else if (e.key === '3') {
-                document.querySelector('.consume-btn[data-count="3"]')?.click();
-            } else if (e.key === '6') {
-                document.querySelector('.consume-btn[data-count="6"]')?.click();
+            if (type === 'class') {
+                state.targetSelection.classes[value] = checkbox.checked;
+            } else if (type === 'attribute') {
+                state.targetSelection.attributes[value] = checkbox.checked;
             }
-        });
-  
-    // ==================== 工具函数 ====================
-    /**
+            updateAndSave();
+            return;
+        }
+
+        // 材料勾选监听
+        if (e.target.matches('#materials-list input[type="checkbox"]')) {
+            const materialId = e.target.id.replace('-check', '');
+            state.materials[materialId] = e.target.checked;
+            updateAndSave();
+        }
+    });
+
+    // 2. 输入框监听
+    const handleInputChange = (e) => {
+        // 兵书数量输入
+        if (e.target === dom.fragments || e.target === dom.scrolls) {
+            state[e.target.id === 'bingshu_canjuan' ? 'fragments' : 'scrolls'] = 
+                parseInt(e.target.value) || 0;
+            updateAndSave();
+            return;
+        }
+
+        // 历练次数输入
+        if (e.target.classList.contains('training-count-input')) {
+            const input = e.target;
+            const category = input.dataset.category;
+            const index = parseInt(input.dataset.index);
+            
+            input.value = input.value.replace(/[^0-9]/g, '');
+            const newValue = parseInt(input.value) || 0;
+            
+            state.training[category][index].required = newValue;
+            state.training[category][index].userModified = true;
+            
+            clearTimeout(input.saveTimeout);
+            input.saveTimeout = setTimeout(() => updateAndSave(), 500);
+        }
+    };
+    document.addEventListener('input', handleInputChange);
+
+    // 3. 按钮点击监听
+    document.addEventListener('click', (e) => {
+        // 核销按钮
+        if (e.target.classList.contains('consume-btn')) {
+            const btn = e.target;
+            let count;
+            
+            if (btn.classList.contains('custom-consume')) {
+                const input = btn.nextElementSibling;
+                if (!input?.classList.contains('custom-consume-input')) return;
+                count = parseInt(input.value) || 0;
+            } else {
+                count = parseInt(btn.dataset.count) || 1;
+            }
+            
+            if (count > 0) {
+                handleConsume(
+                    btn.dataset.category,
+                    parseInt(btn.dataset.index),
+                    count
+                );
+            }
+            e.stopPropagation();
+            return;
+        }
+
+        // 撤销按钮
+        if (e.target.classList.contains('undo-btn')) {
+            const btn = e.target;
+            handleUndo(btn.dataset.category, parseInt(btn.dataset.index));
+            e.stopPropagation();
+            return;
+        }
+
+        // 一键撤销分类
+        if (e.target.classList.contains('reset-category-btn')) {
+            handleResetCategory(e.target.dataset.category);
+            return;
+        }
+
+        // 清除修为完成记录
+        if (e.target.classList.contains('clear-tier-btn')) {
+            const category = e.target.dataset.category;
+            const tier = parseInt(e.target.dataset.tier);
+            if (confirm(`确定要清除${getCategoryName(category)}的修为${tier}完成记录吗？`)) {
+                clearTierCompletion(category, tier);
+            }
+            e.stopPropagation();
+            return;
+        }
+    });
+
+    // 4. 独立监听的元素
+    dom.moneyCheck.addEventListener('change', () => {
+        state.moneyChecked = dom.moneyCheck.checked;
+        updateAndSave();
+    });
+
+    dom.resetButton.addEventListener('click', () => {
+        if (confirm('确定要清空所有记录吗？')) {
+            state = resetState();
+            updateAndSave();
+        }
+    });
+
+    // 5. 键盘快捷键支持
+    document.addEventListener('keydown', (e) => {
+        if (e.target.tagName === 'INPUT') return;
+        
+        if (e.key === '1') {
+            document.querySelector('.consume-btn[data-count="1"]')?.click();
+        } else if (e.key === '3') {
+            document.querySelector('.consume-btn[data-count="3"]')?.click();
+        } else if (e.key === '6') {
+            document.querySelector('.consume-btn[data-count="6"]')?.click();
+        }
+    });
+};
+
+// ==================== 工具函数 ====================
+/**
  * 兼容旧版数据迁移
  * 说明：旧版本没有trainingCompletions字段，需要初始化
  */
 const migrateOldData = (savedData) => {
-        // 如果是从旧版升级（没有trainingCompletions字段）
-        if (!savedData.trainingCompletions) {
-            console.log('检测到旧版数据，初始化修为完成记录...');
-            return {
-                yinYang: {13: 0, 15: 0, 17: 0},
-                windFire: {13: 0, 15: 0, 17: 0},
-                earthWater: {13: 0, 15: 0, 17: 0}
-            };
-        }
-        // 如果是新版数据，直接返回原有值
-        return savedData.trainingCompletions;
-    };
-    // 更新并保存数据
-    const updateAndSave = () => {
-        state.lastUpdated = new Date().toISOString();
-        saveData();
-        renderAll();
-    };
-
-    // 保存数据到本地存储
-    const saveData = () => {
-        try {
-            localStorage.setItem(CONFIG.storageKey, JSON.stringify(state));
-        } catch (e) {
-            console.error('保存数据失败:', e);
-        }
-    };
-
-    // 重置初始化状态
-    const resetState = () => {
-        // 初始化材料状态
-        const materials = {};
-        GAME_DATA.materials.forEach(material => {
-            materials[material.id] = false;
-        });
-        
-        // 初始化历练状态
-        const initTraining = (category) => 
-            GAME_DATA.training[category].map(item => ({
-                completed: 0,
-                required: item.required,
-                userModified: false,
-                tier: 17
-            }));
-
+    // 如果是从旧版升级（没有trainingCompletions字段）
+    if (!savedData.trainingCompletions) {
+        console.log('检测到旧版数据，初始化修为完成记录...');
         return {
-            moneyChecked: false,
-            fragments: 0,
-            scrolls: 0,
-            materials,
-            trainingCompletions: {
-                yinYang: {13: 0, 15: 0, 17: 0},
-                windFire: {13: 0, 15: 0, 17: 0},
-                earthWater: {13: 0, 15: 0, 17: 0}
-            },
-            training: {
-                yinYang: initTraining('yinYang'),
-                windFire: initTraining('windFire'),
-                earthWater: initTraining('earthWater')
-            },
-            targetSelection: {
-                classes: {
-                    guidao: false,
-                    shenji: false,
-                    qihuang: false,
-                    longdun: false,
-                    pojun: false
-                },
-                attributes: {
-                    yin: false,
-                    yang: false,
-                    feng: false,
-                    huo: false,
-                    di: false,
-                    shui: false
-                }
-            },
-            trainingHistory: [],
-            lastUpdated: new Date().toISOString()
+            yinYang: {13: 0, 15: 0, 17: 0},
+            windFire: {13: 0, 15: 0, 17: 0},
+            earthWater: {13: 0, 15: 0, 17: 0}
         };
-    };
-
-    // 初始化职业状态
-    const getClassKey = (className) => {
-        const map = {
-            '诡道': 'guidao',
-            '神纪': 'shenji',
-            '岐黄': 'qihuang',
-            '龙盾': 'longdun',
-            '破军': 'pojun'
-        };
-        return map[className] || '';
-    };
-
-// ==================== 操作处理 ====================
-    const clearTierCompletion = (category, tier) => {
-        if (state.trainingCompletions[category] && state.trainingCompletions[category][tier]) {
-            state.trainingCompletions[category][tier] = 0;
-            updateAndSave();
-        }
-    };
+    }
+    // 如果是新版数据，直接返回原有值
+    return savedData.trainingCompletions;
+};
 
 // ==================== 公共接口 ====================
 return { 
     init,
     clearTierCompletion  // 暴露新方法
 };
+})();
+
 // ==================== 初始化 ====================
 document.addEventListener('DOMContentLoaded', () => {
     if (!('localStorage' in window)) {
