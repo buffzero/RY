@@ -35,7 +35,24 @@ const ResourceTracker = (() => {
         storageKey: 'DHY-Upgrade-Assistant_v1',
         requiredExp: 2386300 // 所需总经验值
     };
+// ==================== 数据保存函数 ====================
+let saveTimeout; // 用于节流保存
+    const saveData = () => {
+        try {
+            state.lastUpdated = new Date().toISOString();
+            localStorage.setItem(CONFIG.storageKey, JSON.stringify(state));
+            updateLastUpdated();
+        } catch (e) {
+            console.error('数据保存失败:', e);
+            alert('保存失败，请检查浏览器存储空间或隐私模式设置。');
+        }
+    };
 
+    const updateAndSave = () => {
+        renderAll(); // 先更新界面
+        clearTimeout(saveTimeout);
+        saveTimeout = setTimeout(saveData, 200); // 节流保存
+    };
     // ==================== 游戏数据 ====================
     const GAME_DATA = {
         // 职业列表
