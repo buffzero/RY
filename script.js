@@ -431,6 +431,7 @@ const setupDOM = () => {
 
     // 渲染单个历练类别
    const renderTrainingCategory = (category, container) => {
+     const floors = [4, 6, 8, 10, 12]; // 对应历练四/六/八/十/十二
     // 1. 更健壮的数据检查
     if (!state.training[category]?.length) {
         console.error(`错误：${category} 的历练数据为空`);
@@ -462,14 +463,16 @@ container.innerHTML = `
         <button class="reset-category-btn">一键撤销</button>
     </div>
             ${GAME_DATA.training[category].map((item, index) => {
-                const trainingItem = state.training[category][index] || { completed: 0 };
-                 const required = trainingItem.userModified ?
-                trainingItem.required :
-                GAME_DATA.trainingPresets[trainingItem.tier][floor];
+    const trainingItem = state.training[category][index] || { completed: 0 };
+    const floor = floors[index]; // 现在可以安全使用
+    
+    const required = trainingItem.userModified ?
+        trainingItem.required :
+        GAME_DATA.trainingPresets[trainingItem.tier][floor];
                 
             const completed = trainingItem.completed || 0;
             const isMet = completed >= required;
-            
+            const remaining = required - completed;
             return `
                     <div class="training-item">
                         <div class="training-header">
