@@ -555,13 +555,14 @@ const ResourceTracker = (() => {
 
     // 处理修为切换
     const handleTierChange = (category, tier) => {
-        state.training[category].forEach((item, index) => {
-            const floor = [4, 6, 8, 10, 12][index];
-            item.required = GAME_DATA.trainingPresets[tier][floor];
-            item.tier = tier;
-        });
-        updateAndSave();
-    };
+    const floors = [4, 6, 8, 10, 12];
+    state.training[category].forEach((item, index) => {
+        item.required = GAME_DATA.trainingPresets[tier][floors[index]];
+        item.tier = tier;
+    });
+    updateTrainingCompletions(category);
+    updateAndSave();
+};
 
     // 处理分类重置
     const handleResetCategory = (category) => {
@@ -633,8 +634,10 @@ const ResourceTracker = (() => {
             parseInt(btn.dataset.index),
             parseInt(btn.dataset.count)
         );
+    } else if (e.target.classList.contains('undo-btn')) {
+        const btn = e.target;
+        handleUndo(state.currentAttribute, parseInt(btn.dataset.index));
     }
-});
             // 撤销按钮
             else if (e.target.classList.contains('undo-btn')) {
                 const btn = e.target;
