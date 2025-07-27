@@ -24,41 +24,6 @@
   --di-color: rgb(230, 209, 174);
   --shui-color: rgb(217, 235, 248);
 }
-/* ==================== 职业 & 属性背景色 ==================== */
-/* 职业选项背景 */
-.target-option.guidao,
-.target-option.shenji,
-.target-option.qihuang,
-.target-option.longdun,
-.target-option.pojun {
-  background: #FFF7E7; /* 浅黄色背景 */
-  border-radius: 4px;
-  padding: 2px 6px;
-}
-
-/* 属性选项背景 */
-.target-option.yin { background-color: var(--yin-color); }
-.target-option.yang { background-color: var(--yang-color); }
-.target-option.feng { background-color: var(--feng-color); }
-.target-option.huo { background-color: var(--huo-color); }
-.target-option.di { background-color: var(--di-color); }
-.target-option.shui { background-color: var(--shui-color); }
-
-/* 状态面板背景色 */
-.status-item.guidao,
-.status-item.shenji,
-.status-item.qihuang,
-.status-item.longdun,
-.status-item.pojun {
-  background: #FFF7E7; /* 浅黄色背景 */
-}
-
-.status-item.yin { background-color: var(--yin-color); }
-.status-item.yang { background-color: var(--yang-color); }
-.status-item.feng { background-color: var(--feng-color); }
-.status-item.huo { background-color: var(--huo-color); }
-.status-item.di { background-color: var(--di-color); }
-.status-item.shui { background-color: var(--shui-color); }
 
 /* 悬停效果 */
 .status-item:hover {
@@ -132,4 +97,72 @@ body {
     width: 10px;
     height: 10px;
   }
+}
+/* ==================== 简洁版状态面板 ==================== */
+.status-board {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+
+.status-columns {
+  display: block; /* 改为单列布局 */
+}
+
+.status-column {
+  margin-bottom: 15px;
+  background: none;
+  border: none;
+  padding: 0;
+  box-shadow: none;
+}
+
+.status-item {
+  display: block; /* 改为块级元素 */
+  padding: 8px 0;
+  border: none;
+  background: none !important;
+  margin-bottom: 2px;
+}
+
+.status-item span:first-child {
+  display: block; /* 名称单独一行 */
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.status-indicator {
+  display: inline-block;
+  background: #f0f0f0;
+  color: #666;
+  border: 1px solid #ddd;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.status-indicator.ready {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+/* 目标密探标记样式 */
+.target-section {
+  background: white;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border: 1px solid #e0e0e0;
+}
+
+.target-row {
+  margin-bottom: 10px;
+}
+
+.target-option {
+  background: none !important;
+  padding: 2px 5px;
+  display: block;
+  margin-bottom: 5px;
 }
