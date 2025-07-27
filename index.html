@@ -8,13 +8,6 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- 属性选择选项卡 -->
-    <div class="attribute-tabs">
-        <button class="tab-btn active" data-attribute="windFire">风火历练</button>
-        <button class="tab-btn" data-attribute="earthWater">地水历练</button>
-        <button class="tab-btn" data-attribute="yinYang">阴阳历练</button>
-    </div>
-
     <div class="target-section">
         <h2 class="target-title">🚩目标密探标记</h2>
         <div class="target-row">
@@ -116,20 +109,17 @@
             </div>
         </div>
         
-        <!-- 当前属性材料 -->
-        <div class="section current-attribute-materials">
-            <div class="section-title" id="currentAttributeTitle">风火材料</div>
+        <!-- 升级材料 -->
+        <div class="section">
+            <div class="section-title">升级材料</div>
             <div class="resource-grid" id="materials-list"></div>
         </div>
         
-        <!-- 历练材料部分 - 修改后的结构 -->
+        <!-- 历练材料部分 - 简化版 -->
         <div class="section">
             <div class="section-title">历练进度</div>
             <div class="training-container">
-                <!-- 这三个容器必须保留且ID与脚本匹配 -->
-                <div id="yinYangTraining" class="training-category"></div>
-                <div id="windFireTraining" class="training-category"></div>
-                <div id="earthWaterTraining" class="training-category"></div>
+                <div id="trainingContent"></div>
             </div>
         </div>
  
