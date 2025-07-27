@@ -280,13 +280,12 @@ const dom = {}; // 缓存DOM元素
     floors.forEach((floor, index) => {
         const required = GAME_DATA.trainingPresets[tier][floor];
         const completed = state.training[category][index].completed;
+        const usedByHigherTiers = [15, 17].reduce((sum, higherTier) => {
+            return sum + (state.trainingCompletions[category][higherTier] || 0) * 
+                   GAME_DATA.trainingPresets[higherTier][floor];
+        }, 0);
 
-        // 关键修改：统一使用最小值计算占用
-        const usedBy17 = (tier < 17) 
-            ? Math.min(...floors.map(f => GAME_DATA.trainingPresets[17][f]))
-            : 0;
-            
-        const available = Math.max(0, completed - usedBy17);
+        const available = Math.max(0, completed - usedByHigherTiers);
         if (required > 0) {
             minCompletion = Math.min(minCompletion, Math.floor(available / required));
         }
@@ -294,7 +293,6 @@ const dom = {}; // 缓存DOM元素
 
     return minCompletion === Infinity ? 0 : minCompletion;
 };
-
     // ==================== setupDOM 函数 ====================
     const setupDOM = () => {
         try {
@@ -487,23 +485,36 @@ const dom = {}; // 缓存DOM元素
         const completed = state.trainingCompletions[category][tier] || 0;
         const currentTier = state.training[category][0].tier;
         
-        // 修复：计算被17级占用的次数（取各层需求的最小值）
-        const usedBy17 = (tier < 17) 
-            ? Math.min(...floors.map(floor => GAME_DATA.trainingPresets[17][floor]))
-            : 0;
+        // 计算被更高修为占用的次数（动态计算）
+        const usedByHigher = [15, 17]
+            .filter(t => t > tier)
+            .reduce((sum, t) => {
+                return sum + (state.trainingCompletions[category][t] || 0) * 
+                       GAME_DATA.trainingPresets[t][floors[0]]; // 取第一层作为代表值
+            }, 0);
 
-        // 仅当有记录或可领取时显示徽章
-        if (completed > 0 || (currentTier === tier && checkTrainingCompletion(category, tier) > completed)) {
-            return `
-                <span class="completion-badge tier-${tier}" 
-                      title="${categoryName}·修为${tier}：
-                      - 已完成 ${completed}次
-                      ${usedBy17 > 0 ? `- 其中 ${usedBy17}次 被17级占用` : ''}">
-                    ${tier}: ${completed}
-                </span>
-            `;
-        }
-        return '';
+        // 计算当前可领取次数
+        const available = checkTrainingCompletion(category, tier) - completed;
+
+        // 更详细的提示信息
+        const tooltip = `
+            ${categoryName}·修为${tier}：
+            - 总计完成: ${completed}次
+            ${usedByHigher > 0 ? `- 被更高修为占用: ${usedByHigher}次` : ''}
+            ${available > 0 ? `- 可领取: +${available}次` : ''}
+        `.trim();
+
+        // 显示条件：有完成记录 或 当前选中且可领取
+        const shouldShow = completed > 0 || 
+                          (currentTier === tier && available > 0);
+
+        return shouldShow ? `
+            <span class="completion-badge tier-${tier} 
+                  ${available > 0 ? 'available' : ''}"
+                  title="${tooltip}">
+                ${tier}: ${completed}${available > 0 ? `(+${available})` : ''}
+            </span>
+        ` : '';
     }).filter(Boolean).join('');
 
        container.innerHTML = `
@@ -653,18 +664,20 @@ const dom = {}; // 缓存DOM元素
     // 1. 清除完成记录
     state.trainingCompletions[category][tier] = 0;
 
-    // 2. 如果是清除17级修为，需同步修正实际完成次数
+    // 2. 如果是清除17级修为，释放材料占用（关键修改！）
     if (tier === 17) {
         const floors = [4, 6, 8, 10, 12];
-        state.training[category].forEach((item, index) => {
-            const floor = floors[index];
-            const maxRequired = GAME_DATA.trainingPresets[17][floor];
-            // 确保完成次数不超过17级所需的最大值（关键修改！）
-            item.completed = Math.min(item.completed, maxRequired);
+        floors.forEach((floor, index) => {
+            // 不重置完成次数，仅释放占用标记
+            state.training[category][index].completed = Math.max(
+                0,
+                state.training[category][index].completed - 
+                GAME_DATA.trainingPresets[17][floor]
+            );
         });
     }
 
-    updateAndSave(); // 更新界面
+    updateAndSave();
 };
     // 处理核销操作
     const handleConsume = (category, index, count) => {
