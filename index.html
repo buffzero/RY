@@ -8,96 +8,96 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <!-- 属性选择选项卡 -->
+    <div class="attribute-tabs">
+        <button class="tab-btn active" data-attribute="windFire">风火历练</button>
+        <button class="tab-btn" data-attribute="earthWater">地水历练</button>
+        <button class="tab-btn" data-attribute="yinYang">阴阳历练</button>
+    </div>
+
     <div class="target-section">
         <h2 class="target-title">🚩目标密探标记</h2>
         <div class="target-row">
-          <span class="target-label">职业：</span>
-          <label class="target-option guidao">
-            <input type="checkbox" data-type="class" data-value="guidao">
-            <span class="target-text">诡道</span>
-          </label>
-          <label class="target-option shenji">
-            <input type="checkbox" data-type="class" data-value="shenji">
-            <span class="target-text">神纪</span>
-          </label>
-          <label class="target-option qihuang">
-            <input type="checkbox" data-type="class" data-value="qihuang">
-            <span class="target-text">岐黄</span>
-          </label>
-          <label class="target-option longdun">
-            <input type="checkbox" data-type="class" data-value="longdun">
-            <span class="target-text">龙盾</span>
-          </label>
-          <label class="target-option pojun">
-            <input type="checkbox" data-type="class" data-value="pojun">
-            <span class="target-text">破军</span>
-          </label>
+            <span class="target-label">职业：</span>
+            <label class="target-option guidao">
+                <input type="checkbox" data-type="class" data-value="guidao">
+                <span class="target-text">诡道</span>
+            </label>
+            <label class="target-option shenji">
+                <input type="checkbox" data-type="class" data-value="shenji">
+                <span class="target-text">神纪</span>
+            </label>
+            <label class="target-option qihuang">
+                <input type="checkbox" data-type="class" data-value="qihuang">
+                <span class="target-text">岐黄</span>
+            </label>
+            <label class="target-option longdun">
+                <input type="checkbox" data-type="class" data-value="longdun">
+                <span class="target-text">龙盾</span>
+            </label>
+            <label class="target-option pojun">
+                <input type="checkbox" data-type="class" data-value="pojun">
+                <span class="target-text">破军</span>
+            </label>
         </div>
         <div class="target-row">
-          <span class="target-label">属性：</span>
-          <label class="target-option yin">
-            <input type="checkbox" data-type="attribute" data-value="yin">
-            <span class="target-text">阴</span>
-          </label>
-          <label class="target-option yang">
-            <input type="checkbox" data-type="attribute" data-value="yang">
-            <span class="target-text">阳</span>
-          </label>
-          <label class="target-option feng">
-            <input type="checkbox" data-type="attribute" data-value="feng">
-            <span class="target-text">风</span>
-          </label>
-          <label class="target-option huo">
-            <input type="checkbox" data-type="attribute" data-value="huo">
-            <span class="target-text">火</span>
-          </label>
-          <label class="target-option di">
-            <input type="checkbox" data-type="attribute" data-value="di">
-            <span class="target-text">地</span>
-          </label>
-          <label class="target-option shui">
-            <input type="checkbox" data-type="attribute" data-value="shui">
-            <span class="target-text">水</span>
-          </label>
+            <span class="target-label">属性：</span>
+            <label class="target-option yin">
+                <input type="checkbox" data-type="attribute" data-value="yin">
+                <span class="target-text">阴</span>
+            </label>
+            <label class="target-option yang">
+                <input type="checkbox" data-type="attribute" data-value="yang">
+                <span class="target-text">阳</span>
+            </label>
+            <label class="target-option feng">
+                <input type="checkbox" data-type="attribute" data-value="feng">
+                <span class="target-text">风</span>
+            </label>
+            <label class="target-option huo">
+                <input type="checkbox" data-type="attribute" data-value="huo">
+                <span class="target-text">火</span>
+            </label>
+            <label class="target-option di">
+                <input type="checkbox" data-type="attribute" data-value="di">
+                <span class="target-text">地</span>
+            </label>
+            <label class="target-option shui">
+                <input type="checkbox" data-type="attribute" data-value="shui">
+                <span class="target-text">水</span>
+            </label>
         </div>
-      </div>
-      
+    </div>
+    
     <div id="resourceTracker">
-        <!-- 标题 -->
+        <!-- 状态面板 -->
         <div class="status-board">
             <h2>当前可升级密探</h2>
             <div class="status-columns">
-              <!-- 职业卡片 -->
-              <div class="status-column profession-column">
-                <h3>职业</h3>
-                <div class="class-status" id="classStatus">
-                  <!-- 动态生成职业状态 -->
+                <div class="status-column profession-column">
+                    <h3>职业</h3>
+                    <div class="class-status" id="classStatus"></div>
                 </div>
-              </div>
-              
-              <!-- 属性卡片 -->
-              <div class="status-column attribute-column">
-                <h3>属性</h3>
-                <div class="attribute-status" id="attributeStatus">
-                  <!-- 动态生成属性状态 -->
+                <div class="status-column attribute-column">
+                    <h3>属性</h3>
+                    <div class="attribute-status" id="attributeStatus"></div>
                 </div>
-              </div>
             </div>
-          </div>
+        </div>
         
         <!-- 金钱及经验 -->
         <div class="section">
             <div class="section-title">金钱及经验</div>
             <div class="resource-grid">
                 <div class="resource-item">
-                    <div class="resource-name">五铢钱 417万</div>
+                    <div class="resource-name">五铢钱</div>
                     <div class="checkbox-container">
                         <input type="checkbox" id="money-check">
                         <label for="money-check" class="material-checkbox"></label>
                     </div>
                 </div>
                 <div class="resource-item">
-                    <div class="resource-name">经验值 2386300</div>
+                    <div class="resource-name">经验值</div>
                     <div class="checkbox-container">
                         <div class="sub-status-indicator not-met" id="exp-status">未满足</div>
                     </div>
@@ -116,26 +116,17 @@
             </div>
         </div>
         
-        <!-- 升级材料 -->
-        <div class="section">
-            <div class="section-title">升级材料</div>
-            <div class="resource-grid" id="materials-list">
-                <!-- 动态生成材料列表 -->
-            </div>
+        <!-- 当前属性材料 -->
+        <div class="section current-attribute-materials">
+            <div class="section-title" id="currentAttributeTitle">风火材料</div>
+            <div class="resource-grid" id="materials-list"></div>
         </div>
         
         <!-- 历练材料部分 -->
         <div class="section">
-            <div class="section-title">历练材料</div>
+            <div class="section-title">历练进度</div>
             <div class="training-container">
-                <!-- 阴阳历练 -->
-                <div class="training-category" id="yinYangTraining"></div>
-
-                <!-- 风火历练 -->
-                <div class="training-category" id="windFireTraining"></div>
-
-                <!-- 地水历练 -->
-                <div class="training-category" id="earthWaterTraining"></div>
+                <div class="training-category" id="currentAttributeTraining"></div>
             </div>
         </div>
  
@@ -146,7 +137,6 @@
         </div>
     </div>
 
-    <!-- 脚本加载 -->
     <script src="script.js"></script>
 </body>
 </html>
