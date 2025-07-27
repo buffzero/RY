@@ -24,6 +24,7 @@ const ResourceTracker = (() => {
             earthWaterTraining: '#earthWaterTraining',
             lastUpdated: '#lastUpdated',
             resetButton: '#resetButton'
+            trainingContent: '#trainingContent' 
         },
         storageKey: 'DHY-Upgrade-Assistant_v3',
         requiredExp: 2386300
@@ -356,75 +357,54 @@ const ResourceTracker = (() => {
             `;
         }).join('');
     };
-
-    // 渲染历练进度
+    // 历练渲染逻辑
     const renderTraining = () => {
-        renderTrainingCategory('yinYang', dom.yinYangTraining);
-        renderTrainingCategory('windFire', dom.windFireTraining);
-        renderTrainingCategory('earthWater', dom.earthWaterTraining);
-    };
-
-    // 渲染单个历练分类
-    const renderTrainingCategory = (category, container) => {
-        const trainingItems = state.training[category];
-        const tier = trainingItems[0]?.tier || 17;
-        const floors = [4, 6, 8, 10, 12];
-        const materialMap = GAME_DATA.materialMapping[category];
-        
-        container.innerHTML = `
-            <div class="training-category-title">
-                <span class="category-name">${getCategoryName(category)}</span>
-                <div class="training-controls">
-                    <select class="tier-select" data-category="${category}">
-                        ${[13, 15, 17].map(t => `
-                            <option value="${t}" ${t === tier ? 'selected' : ''}>
-                                修为${t}
-                            </option>
-                        `).join('')}
-                    </select>
-                    <button class="reset-category-btn" data-category="${category}">一键重置</button>
-                </div>
-            </div>
-            ${floors.map((floor, index) => {
-                const item = trainingItems[index] || { completed: 0 };
-                const required = GAME_DATA.trainingPresets[tier][floor] || 0;
-                const materialId = materialMap[floor];
-                const material = 
-                    category === 'windFire' ? GAME_DATA.windFireMaterials.find(m => m.id === materialId) :
-                    category === 'earthWater' ? GAME_DATA.earthWaterMaterials.find(m => m.id === materialId) :
-                    GAME_DATA.yinYangMaterials.find(m => m.id === materialId);
-
-                return `
-                    <div class="training-item">
-                        <div class="training-header">
-                            <div class="training-name">【历练·${floor}】${material?.name || ''}</div>
-                            <div class="sub-status-indicator ${item.completed >= required ? 'met' : 'not-met'}">
-                                ${item.completed >= required ? '已满足' : `${item.completed}/${required}`}
-                            </div>
-                        </div>
-                        ${renderCircles(required, item.completed)}
-                        <div class="training-actions">
-                            ${[1, 3, 6].map(count => `
-                                <button class="consume-btn" 
-                                    data-category="${category}" 
-                                    data-index="${index}" 
-                                    data-count="${count}"
-                                    ${item.completed >= required ? 'disabled' : ''}>
-                                    核销${count}次
-                                </button>
-                            `).join('')}
-                            <button class="undo-btn" 
-                                data-category="${category}" 
-                                data-index="${index}"
-                                ${item.completed <= 0 ? 'disabled' : ''}>
-                                撤销
-                            </button>
+    const currentTraining = state.training[state.currentAttribute] || [];
+    const tier = currentTraining[0]?.tier || 17;
+    
+    dom.trainingContent.innerHTML = `
+        <div class="training-controls">
+            <select class="tier-select">
+                ${[13, 15, 17].map(t => `
+                    <option value="${t}" ${t === tier ? 'selected' : ''}>
+                        修为${t}
+                    </option>
+                `).join('')}
+            </select>
+        </div>
+        ${currentTraining.map((item, index) => {
+            const floor = [4, 6, 8, 10, 12][index];
+            const required = GAME_DATA.trainingPresets[tier][floor] || 0;
+            
+            return `
+                <div class="training-item">
+                    <div class="training-header">
+                        <div class="training-name">【历练·${floor}】</div>
+                        <div class="sub-status-indicator ${item.completed >= required ? 'met' : 'not-met'}">
+                            ${item.completed >= required ? '已满足' : `${item.completed}/${required}`}
                         </div>
                     </div>
-                `;
-            }).join('')}
-        `;
-    };
+                    ${renderCircles(required, item.completed)}
+                    <div class="training-actions">
+                        ${[1, 3, 6].map(count => `
+                            <button class="consume-btn" 
+                                data-index="${index}" 
+                                data-count="${count}"
+                                ${item.completed >= required ? 'disabled' : ''}>
+                                核销${count}次
+                            </button>
+                        `).join('')}
+                        <button class="undo-btn" 
+                            data-index="${index}"
+                            ${item.completed <= 0 ? 'disabled' : ''}>
+                            撤销
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('')}
+    `;
+};
 
     // 渲染圆圈进度
     const renderCircles = (required, completed) => {
@@ -494,33 +474,34 @@ const ResourceTracker = (() => {
     // ==================== 事件处理 ====================
 
     // 处理核销操作
-    const handleConsume = (category, index, count) => {
-        const training = state.training[category][index];
-        const floor = [4, 6, 8, 10, 12][index];
-        const required = GAME_DATA.trainingPresets[training.tier || 17][floor];
-        const remaining = required - training.completed;
+    const handleConsume = (index, count) => {
+    const training = state.training[state.currentAttribute][index];
+    const floor = [4, 6, 8, 10, 12][index];
+    const tier = training.tier || 17;  // 确保有默认值
+    const required = GAME_DATA.trainingPresets[tier][floor];
+    const remaining = required - training.completed;
 
-        if (count > remaining) {
-            alert(`剩余次数不足: 还需${remaining}次`);
-            return;
-        }
+    if (count > remaining) {
+        alert(`剩余次数不足: 还需${remaining}次`);
+        return;
+    }
 
-        // 记录操作历史
-        state.trainingHistory.push({
-            category,
-            index,
-            previousCount: training.completed,
-            count,
-            timestamp: new Date().toISOString()
-        });
+    // 记录操作历史
+    state.trainingHistory.push({
+        category: state.currentAttribute,
+        index,
+        previousCount: training.completed,
+        count,
+        timestamp: new Date().toISOString()
+    });
 
-        // 更新状态
-        training.completed += count;
-
-        // 检查修为完成状态
-        updateTrainingCompletions(category);
-        updateAndSave();
-    };
+    // 更新状态
+    training.completed += count;
+    
+    // 检查修为完成状态
+    updateTrainingCompletions(state.currentAttribute);
+    updateAndSave();
+};
 
     // 更新修为完成状态
     const updateTrainingCompletions = (category) => {
@@ -646,15 +627,14 @@ const ResourceTracker = (() => {
 
         // 按钮点击
         document.addEventListener('click', (e) => {
-            // 核销按钮
-            if (e.target.classList.contains('consume-btn')) {
-                const btn = e.target;
-                handleConsume(
-                    btn.dataset.category,
-                    parseInt(btn.dataset.index),
-                    parseInt(btn.dataset.count)
-                );
-            }
+    if (e.target.classList.contains('consume-btn')) {
+        const btn = e.target;
+        handleConsume(
+            parseInt(btn.dataset.index),
+            parseInt(btn.dataset.count)
+        );
+    }
+});
             // 撤销按钮
             else if (e.target.classList.contains('undo-btn')) {
                 const btn = e.target;
