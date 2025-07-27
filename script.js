@@ -23,7 +23,7 @@ const ResourceTracker = (() => {
             windFireTraining: '#windFireTraining',
             earthWaterTraining: '#earthWaterTraining',
             lastUpdated: '#lastUpdated',
-            resetButton: '#resetButton'
+            resetButton: '#resetButton', 
             trainingContent: '#trainingContent' 
         },
         storageKey: 'DHY-Upgrade-Assistant_v3',
