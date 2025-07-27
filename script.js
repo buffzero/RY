@@ -281,14 +281,12 @@ const dom = {}; // 缓存DOM元素
         const required = GAME_DATA.trainingPresets[tier][floor];
         const completed = state.training[category][index].completed;
 
-        // 关键逻辑：计算可用次数时，优先扣除17级占用的部分
-        let available = completed;
-        if (tier < 17) {
-            const usedBy17 = GAME_DATA.trainingPresets[17][floor];
-            available = Math.max(0, completed - usedBy17);
-        }
-
-        // 如果当前修为需求为0，跳过计算（避免除以0）
+        // 关键修改：统一使用最小值计算占用
+        const usedBy17 = (tier < 17) 
+            ? Math.min(...floors.map(f => GAME_DATA.trainingPresets[17][f]))
+            : 0;
+            
+        const available = Math.max(0, completed - usedBy17);
         if (required > 0) {
             minCompletion = Math.min(minCompletion, Math.floor(available / required));
         }
@@ -486,27 +484,28 @@ const dom = {}; // 缓存DOM元素
     
     // 生成修为徽章（显示已完成+可完成次数）
     const completionBadges = [13, 15, 17].map(tier => {
-    const completed = state.trainingCompletions[category][tier] || 0;
-    const currentTier = state.training[category][0].tier;
-    
-    // 新增：计算被17级占用的次数
-    const usedBy17 = (tier < 17) 
-        ? GAME_DATA.trainingPresets[17][[4,6,8,10,12][index]] 
-        : 0;
+        const completed = state.trainingCompletions[category][tier] || 0;
+        const currentTier = state.training[category][0].tier;
+        
+        // 修复：计算被17级占用的次数（取各层需求的最小值）
+        const usedBy17 = (tier < 17) 
+            ? Math.min(...floors.map(floor => GAME_DATA.trainingPresets[17][floor]))
+            : 0;
 
-    // 仅当有记录或可领取时显示徽章
-    if (completed > 0 || (currentTier === tier && checkTrainingCompletion(category, tier) > completed)) {
-        return `
-            <span class="completion-badge tier-${tier}" 
-                  title="${categoryName}·修为${tier}：
-                  - 已完成 ${completed}次
-                  ${usedBy17 > 0 ? `- 其中 ${usedBy17}次 被17级占用` : ''}">
-                ${tier}: ${completed}
-            </span>
-        `;
-    }
-    return '';
-}).filter(Boolean).join('');
+        // 仅当有记录或可领取时显示徽章
+        if (completed > 0 || (currentTier === tier && checkTrainingCompletion(category, tier) > completed)) {
+            return `
+                <span class="completion-badge tier-${tier}" 
+                      title="${categoryName}·修为${tier}：
+                      - 已完成 ${completed}次
+                      ${usedBy17 > 0 ? `- 其中 ${usedBy17}次 被17级占用` : ''}">
+                    ${tier}: ${completed}
+                </span>
+            `;
+        }
+        return '';
+    }).filter(Boolean).join('');
+
        container.innerHTML = `
     <div class="training-category-title">
         <span class="category-name">${categoryName}</span>
