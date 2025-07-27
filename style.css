@@ -24,7 +24,46 @@
   --di-color: rgb(230, 209, 174);
   --shui-color: rgb(217, 235, 248);
 }
+/* ==================== 职业 & 属性背景色 ==================== */
+/* 职业选项背景 */
+.target-option.guidao,
+.target-option.shenji,
+.target-option.qihuang,
+.target-option.longdun,
+.target-option.pojun {
+  background: #FFF7E7; /* 浅黄色背景 */
+  border-radius: 4px;
+  padding: 2px 6px;
+}
 
+/* 属性选项背景 */
+.target-option.yin { background-color: var(--yin-color); }
+.target-option.yang { background-color: var(--yang-color); }
+.target-option.feng { background-color: var(--feng-color); }
+.target-option.huo { background-color: var(--huo-color); }
+.target-option.di { background-color: var(--di-color); }
+.target-option.shui { background-color: var(--shui-color); }
+
+/* 状态面板背景色 */
+.status-item.guidao,
+.status-item.shenji,
+.status-item.qihuang,
+.status-item.longdun,
+.status-item.pojun {
+  background: #FFF7E7; /* 浅黄色背景 */
+}
+
+.status-item.yin { background-color: var(--yin-color); }
+.status-item.yang { background-color: var(--yang-color); }
+.status-item.feng { background-color: var(--feng-color); }
+.status-item.huo { background-color: var(--huo-color); }
+.status-item.di { background-color: var(--di-color); }
+.status-item.shui { background-color: var(--shui-color); }
+
+/* 悬停效果 */
+.status-item:hover {
+  opacity: 0.9;
+}
 /* ==================== 全局重置 ==================== */
 * {
   margin: 0;
